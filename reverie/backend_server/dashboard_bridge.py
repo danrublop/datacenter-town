@@ -4,7 +4,8 @@ Bridge between a running ReverieServer and the web dashboard
 
 Files under temp_storage/dashboard/:
   commands.jsonl  dashboard -> reverie  {"id", "cmd"}
-  results.jsonl   reverie -> dashboard  {"id", "cmd", "ok", "output", "time"}
+  results.jsonl   reverie -> dashboard  {"id", "cmd", "ok", "output", "time",
+                                         "sim", "step", "game_time"}
   state.json      reverie -> dashboard  live snapshot of the sim and every persona
 
 Terminal input keeps working: stdin lines and dashboard commands feed the
@@ -44,6 +45,7 @@ _settings_cache = {"mtime": None, "value": dict(DEFAULT_SETTINGS)}
 _llm_trace = collections.defaultdict(lambda: collections.deque(maxlen=12))
 _last_state_write = 0.0
 _current_sim = None  # tags results so the dashboard can show them per run
+_current_rs = None   # stamps results with the step and game time
 
 
 def _now():
@@ -87,9 +89,14 @@ def record_llm(persona_name, template, prompt, output):
 
 
 def record_result(cmd_id, cmd, ok, output):
-  _append_jsonl(RESULT_FILE, {"id": cmd_id, "cmd": cmd, "ok": ok,
-                              "output": output, "time": _now(),
-                              "sim": _current_sim})
+  row = {"id": cmd_id, "cmd": cmd, "ok": ok, "output": output, "time": _now(),
+         "sim": _current_sim}
+  rs = _current_rs
+  if rs is not None:
+    row["step"] = getattr(rs, "step", None)
+    curr = getattr(rs, "curr_time", None)
+    row["game_time"] = curr.strftime("%B %d, %Y, %H:%M:%S") if curr else None
+  _append_jsonl(RESULT_FILE, row)
 
 
 class CommandFeed:
@@ -251,8 +258,9 @@ def _persona_state(p):
 def write_state(rs, status, run_left=0, force=True):
   """Atomically writes the live snapshot. Unforced writes are throttled so
   fast (sleeping) steps don't rewrite the file ten times a second."""
-  global _last_state_write, _current_sim
+  global _last_state_write, _current_sim, _current_rs
   _current_sim = rs.sim_code
+  _current_rs = rs
   if not force and time.time() - _last_state_write < 0.5:
     return
   _last_state_write = time.time()

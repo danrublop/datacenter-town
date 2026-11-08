@@ -14,7 +14,7 @@ const element = (id) => {
 };
 const drawn = {};
 const context = vm.createContext({
-  data: null, selected: null, drawn, $: element,
+  data: null, view: null, selected: null, drawn, $: element,
   document: {getElementById: () => null},
   esc: (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])),
@@ -22,27 +22,38 @@ const context = vm.createContext({
   ResizeObserver: class { observe() {} },
   parseGameTime: () => new Date("2023-02-13T00:00:00"),
   spanLabel: () => "1h", showConvo() {}, selectAgent() {},
+  // Defined outside the slice under test.
+  focus: {whisper: null, step: null}, onFocus() {}, setFocus() {}, chartTipMove() {},
+  sprite: (name) => `/static/${name}.png`, emptyMsg: (t) => t,
 });
 vm.runInContext(script, context);
 const run = (code) => vm.runInContext(code, context);
-assert.equal(run('stanceY({score:0,scale:100,scoring_version:"rubric_v1"})'), 272);
+// A saved run with no readings doesn't promise future ones.
+context.data = {sim: {}, opinions: [], settings: {opinion_steps: 360}};
+context.view = "mock-ui";
+run("renderStance()");
+assert.match(element("stance").innerHTML, /No stance readings in this run\./);
+context.view = null;
+context.data = null;
+assert.equal(run('stanceY({score:0,scale:100,scoring_version:"rubric_v1"})'), 250);
 assert.equal(run('stanceY({score:100,scale:100,scoring_version:"rubric_v1"})'), 12);
-assert.equal(run('stanceY({score:50,scale:100,scoring_version:"rubric_v1"})'), 142);
-assert.equal(run('stanceY({score:1,scale:100})'), 272);
+assert.equal(run('stanceY({score:50,scale:100,scoring_version:"rubric_v1"})'), 131);
+assert.equal(run('stanceY({score:1,scale:100})'), 250);
 assert.equal(run('stanceY({score:10,scale:10})'), 12);
 assert.equal(run('stanceY({score:null,scale:100})'), null);
 const nodes = ["Maya", "Rachel", "Elena"].map((name) => ({name, color: "#9299A4", score: null}));
 context.data = {sim: {persona_order: nodes.map((n) => n.name)}, network: {nodes, edges: []}};
 run("renderNetwork()");
 assert.equal((element("social-network").innerHTML.match(/<circle /g) || []).length, 3);
-assert.equal((element("social-network").innerHTML.match(/#9299A4/g) || []).length, 3);
+// Count fills only; the tooltip repeats the color.
+assert.equal((element("social-network").innerHTML.match(/fill="#9299A4"/g) || []).length, 3);
 const originalPositions = run("JSON.stringify(socialPositions(data.network.nodes,800))");
 context.data.network.nodes.reverse();
 context.data.network.edges = [{source: "Maya", target: "Rachel", count: 301, time: "now"}];
 run("renderNetwork()");
 assert.equal(run("JSON.stringify(socialPositions(data.network.nodes,800))"), originalPositions);
 assert.equal((element("social-network").innerHTML.match(/class="social-edge"/g) || []).length, 1);
-assert.match(element("social-network").innerHTML, /301 completed conversations/);
+assert.match(element("social-network").innerHTML, /301 conversations/);
 assert(run("socialEdgeWidth(2) > socialEdgeWidth(1)"));
 assert(run("socialEdgeWidth(1000000) <= 8"));
 context.data.network.nodes[0].name = '<img src=x onerror="alert(1)">';
@@ -55,7 +66,7 @@ context.data.opinions = [
   {name: "Maya", score: 100, step: 4, scale: 100, scoring_version: "rubric_v1"},
 ];
 run("renderStance()");
-assert.match(element("stance").innerHTML, /0 opposed/);
+assert.match(element("stance").innerHTML, /opposed<\/tspan> 0/);
 assert.match(element("stance-note").textContent, /not directly comparable/);
 const path = element("stance").innerHTML.match(/class="line[^"]*"[^>]*d="([^"]+)"/)[1];
 assert.equal((path.match(/M/g) || []).length, 3); // Break at method change and null.

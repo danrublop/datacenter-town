@@ -56,7 +56,8 @@ HISTORY_GLOB = "static_dirs/assets/the_ville/agent_history_init_*.csv"
 SIM_NAME = re.compile(r"^[\w-]+$")
 # Fields the roster needs every second; the rest is sent for the open agent.
 ROSTER_FIELDS = ("name", "first_name", "act_description", "act_pronunciatio",
-                 "act_address", "chatting_with", "curr_tile", "currently")
+                 "act_address", "act_start_time", "path_left", "chatting_with",
+                 "curr_tile", "currently", "living_area")
 
 
 def _read_json(path, default=None):
@@ -97,6 +98,7 @@ def _sims():
                  "curr_time": meta.get("curr_time", ""),
                  "fork": meta.get("fork_sim_code"),
                  "maze": meta.get("maze_name"),
+                 "agents": meta.get("persona_names", []),
                  "mtime": os.path.getmtime(meta_path)})
   return sorted(sims, key=lambda s: -s["mtime"])
 
@@ -119,13 +121,50 @@ def _run_log(sim, name, n, start):
   return rows
 
 
-def _opinions(sim, start):
-  """Stance readings for the graph. The memory ids behind each rating stay in
-  the file for analysis; the graph only needs the numbers."""
-  rows = _run_log(sim, "opinions.jsonl", 4000, start)
-  for r in rows:
-    r.pop("evidence", None)
-  return rows
+def _opinions(rows):
+  """Stance readings without their evidence ids, which only the agent view needs."""
+  return [{k: v for k, v in r.items() if k != "evidence"} for r in rows]
+
+
+EVIDENCE_SHOWN = 5
+# nodes.json can be large; cached per path until its mtime changes.
+_nodes_cache = {}
+
+
+def _saved_nodes(sim, name):
+  path = f"storage/{sim}/personas/{name}/bootstrap_memory/associative_memory/nodes.json"
+  try:
+    mtime = os.path.getmtime(path)
+  except OSError:
+    return {}
+  for old in [k for k in _nodes_cache if not k.startswith(f"storage/{sim}/")]:
+    del _nodes_cache[old]
+  hit = _nodes_cache.get(path)
+  if not hit or hit[0] != mtime:
+    nodes = _read_json(path)
+    if not isinstance(nodes, dict):
+      return {}  # caught mid-save; don't cache, read again next poll
+    hit = _nodes_cache[path] = (mtime, nodes)
+  return hit[1]
+
+
+def _stance_evidence(sim, name, rows):
+  """Memories behind the agent's latest rated reading. Ids newer than the last
+  save don't resolve yet and are skipped."""
+  latest = next((r for r in reversed(rows)
+                 if r.get("name") == name and r.get("score") is not None), None)
+  if not latest or not latest.get("evidence"):
+    return []
+  nodes = _saved_nodes(sim, name)
+  out = []
+  for node_id in latest["evidence"]:
+    n = nodes.get(node_id)
+    if n:
+      out.append({"id": node_id, "type": n.get("type"),
+                  "description": n.get("description"), "created": n.get("created")})
+    if len(out) == EVIDENCE_SHOWN:
+      break
+  return out
 
 
 def _whispers(sim):
@@ -261,18 +300,41 @@ def dashboard_run(request, sim):
     "roster": [{k: agents[n].get(k) for k in ROSTER_FIELDS} for n in names],
     "agent": agents.get(agent),
   }
+  opinions = _run_log(sim, "opinions.jsonl", 4000, start)
   if view["agent"]:
     view["agent"]["history"] = _view_history(sim, agent)
+    view["agent"]["evidence"] = _stance_evidence(sim, agent, opinions)
   return JsonResponse({
     "sim": view,
     "conversations": _run_log(sim, "conversations.jsonl", 300, start),
     "events": _run_log(sim, "events.jsonl", 300, start),
-    "opinions": _opinions(sim, start),
+    "opinions": _opinions(opinions),
     "whispers": _whispers(sim),
     "mentions": _mentions(sim, start),
     "network": network_summary(sim, names, view["step"]),
     "results": [r for r in _tail_jsonl(RESULT_FILE, 400) if r.get("sim") == sim][-60:],
   })
+
+
+def dashboard_activity(request, sim):
+  """What one agent was doing at a step, from that step's movement file."""
+  name = request.GET.get("name", "")
+  try:
+    step = int(request.GET.get("step", ""))
+  except ValueError:
+    step = -1
+  if SIM_NAME.match(sim) and step >= 0:
+    # Steps can be missing on disk; take the nearest earlier one.
+    for s in range(step, max(-1, step - 60), -1):
+      move = _read_json(f"storage/{sim}/movement/{s}.json")
+      p = (move or {}).get("persona", {}).get(name)
+      if p:
+        desc, _, addr = (p.get("description") or "").partition(" @ ")
+        others = {c[0] for c in p.get("chat") or [] if c and c[0] != name}
+        return JsonResponse({"step": s, "description": desc, "address": addr,
+                             "pronunciatio": p.get("pronunciatio"),
+                             "chatting_with": min(others) if others else None})
+  return JsonResponse({}, status=404)
 
 
 def _backend_status(state):
@@ -311,11 +373,13 @@ def dashboard_state(request):
     state["agent"] = personas.get(agent)
     sim = state["sim_code"]
     state["start_step"] = start = _run_start(sim)
+    opinions = _run_log(sim, "opinions.jsonl", 4000, start)
     if state["agent"]:
       state["agent"]["history"] = _view_history(sim, agent)
+      state["agent"]["evidence"] = _stance_evidence(sim, agent, opinions)
     data["conversations"] = _run_log(sim, "conversations.jsonl", 300, start)
     data["events"] = _run_log(sim, "events.jsonl", 300, start)
-    data["opinions"] = _opinions(sim, start)
+    data["opinions"] = _opinions(opinions)
     data["whispers"] = _whispers(sim)
     data["mentions"] = _mentions(sim, start)
     data["network"] = network_summary(sim, state.get("persona_order", []), state["step"])
@@ -334,16 +398,22 @@ def _cost(row):
 
 
 # Rows parsed so far, read incrementally so each poll only parses new lines.
-_usage = {"offset": 0, "rows": []}
+_usage = {"offset": 0, "rows": [], "ino": None, "head": b""}
 
 
 def _usage_rows():
   try:
-    size = os.path.getsize(USAGE_FILE)
+    st = os.stat(USAGE_FILE)
+    with open(USAGE_FILE, "rb") as f:
+      head = f.read(256)
   except OSError:
     return []
-  if size < _usage["offset"]:
-    _usage.update(offset=0, rows=[])  # file was replaced
+  size = st.st_size
+  # Reset if the file was replaced or rewritten rather than appended to.
+  if (size < _usage["offset"] or st.st_ino != _usage["ino"]
+      or head[:len(_usage["head"])] != _usage["head"]):
+    _usage.update(offset=0, rows=[])
+  _usage.update(ino=st.st_ino, head=head)
   if size > _usage["offset"]:
     with open(USAGE_FILE, "rb") as f:
       f.seek(_usage["offset"])
@@ -380,21 +450,74 @@ def _group(rows, key):
                 key=lambda g: -g["cost"])
 
 
+def _local_day(ts):
+  """Local midnight at or before <ts>."""
+  return int(time.mktime(time.localtime(ts)[:3] + (0, 0, 0, 0, 0, -1)))
+
+
+def _series(rows, key, size, local_days=False):
+  """[[bucket start, cost, tokens, calls], ...] per <size>-second bucket of
+  <key>(row), zero-filled; <local_days> uses local calendar days instead."""
+  start = _local_day if local_days else (lambda at: int(at // size) * size)
+  sums = {}
+  for r in rows:
+    at = key(r)
+    if at is not None:
+      s = sums.setdefault(start(at), [0, 0, 0])
+      s[0] += r["cost"] or 0
+      s[1] += r.get("in", 0) + r.get("out", 0)
+      s[2] += 1
+  if not sums:
+    return []
+  out, b = [], min(sums)
+  while b <= max(sums):
+    out.append([b, *sums.get(b, [0, 0, 0])])
+    # Days can be 23 or 25 hours across a DST change.
+    b = _local_day(b + 26 * 3600) if local_days else b + size
+  return out
+
+
+def _scope(rows, series):
+  return {
+    "totals": _totals(rows),
+    "agents": _group([r for r in rows if r.get("persona")], "persona"),
+    "sources": _group(rows, "source"),
+    "models": _group(rows, "model"),
+    "errors": [{"ts": r["ts"], "model": r.get("model"),
+                "status": r.get("status"), "error": r.get("error"),
+                "persona": r.get("persona")}
+               for r in rows if not r.get("ok", True)][-8:][::-1],
+    "series": series,
+  }
+
+
+def _wall_series(rows):
+  """Hourly buckets, or daily once the span exceeds 72 hours."""
+  if not rows:
+    return {"kind": "wall", "size": 3600, "points": []}
+  size = 3600 if rows[-1]["ts"] - rows[0]["ts"] <= 72 * 3600 else 86400
+  return {"kind": "wall", "size": size,
+          "points": _series(rows, lambda r: r["ts"], size, local_days=size == 86400)}
+
+
 def dashboard_usage(request):
   rows = _usage_rows()
   sim = request.GET.get("sim") or (_read_json(STATE_FILE) or {}).get("sim_code")
   sec_per_step = (_read_json(f"storage/{sim}/reverie/meta.json", {}) or {}).get("sec_per_step") or 10
   now = time.time()
-  midnight = time.mktime(time.localtime(now)[:3] + (0, 0, 0, 0, 0, -1))
+  midnight = _local_day(now)
   run_rows = [r for r in rows if r.get("sim") == sim]
   recent = [r for r in rows if r["ts"] > now - 300]
 
-  # Average cost per game hour over the steps this run has simulated.
-  steps = [r["step"] for r in run_rows if r.get("source") == "step"
-           and r.get("step") is not None]
-  step_cost = sum(r["cost"] or 0 for r in run_rows if r.get("source") == "step")
+  step_rows = [r for r in run_rows if r.get("source") == "step"]
+  steps = [r["step"] for r in step_rows if r.get("step") is not None]
   game_hours = ((max(steps) - min(steps) + 1) * sec_per_step / 3600
                 if steps else 0)
+
+  today_rows = [r for r in rows if r["ts"] >= midnight]
+  game_series = {"kind": "game", "size": 3600, "sec_per_step": sec_per_step,
+                 "points": _series(run_rows, lambda r: None if r.get("step") is None
+                                   else r["step"] * sec_per_step, 3600)}
 
   ok_chat = [r["secs"] for r in rows if r.get("ok") and r.get("kind") == "chat"][-200:]
   ok_chat_sorted = sorted(ok_chat)
@@ -402,29 +525,27 @@ def dashboard_usage(request):
     "since": rows[0]["ts"] if rows else None,
     "sim": sim,
     "run": _totals(run_rows),
-    "today": _totals([r for r in rows if r["ts"] >= midnight]),
+    "today": _totals(today_rows),
     "all": _totals(rows),
     "last5": {**_totals(recent), "minutes": 5},
-    "per_game_hour": step_cost / game_hours if game_hours else None,
     "game_hours": game_hours,
+    # Per-game-hour figures use step calls only.
+    "steps": _totals(step_rows),
     "latency": {
       "avg": sum(ok_chat) / len(ok_chat) if ok_chat else None,
       "p95": ok_chat_sorted[int(len(ok_chat_sorted) * 0.95)] if ok_chat else None,
       "n": len(ok_chat)},
-    "agents": _group([r for r in run_rows if r.get("persona")], "persona"),
-    "sources": _group(run_rows, "source"),
-    "models": _group(rows, "model"),
+    "scopes": {"run": _scope(run_rows, game_series),
+               "today": _scope(today_rows, _wall_series(today_rows)),
+               "all": _scope(rows, _wall_series(rows))},
     "unpriced": sorted({r.get("model") for r in rows if r["cost"] is None}),
-    "errors": [{"ts": r["ts"], "model": r.get("model"),
-                "status": r.get("status"), "error": r.get("error"),
-                "persona": r.get("persona")}
-               for r in rows if not r.get("ok", True)][-8:][::-1],
     "prices": {k: list(v) for k, v in PRICES.items()},
   })
 
 
 def dashboard_log(request):
-  return JsonResponse({"lines": _tail_lines(BACKEND_LOG, 300)})
+  # Enough for several runs; the page groups them by run.
+  return JsonResponse({"lines": _tail_lines(BACKEND_LOG, 2000, max_bytes=1024 * 1024)})
 
 
 @require_POST
