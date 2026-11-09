@@ -103,6 +103,7 @@
 	let pre_anims_direction;
 	let pre_anims_direction_dict = {};
 	let pegs = {};   // persona name -> visible peg sprite
+	const PEG_LIFT = 24;   // the 3x peg is taller than the old character; its bubble sits higher
 	const PEG_FACING = {d: 0, l: 1, r: 2, u: 3};
 	const pegRow = (i, d) => (i % 8) * 4 + PEG_FACING[d || "d"];
 	const pegIndex = (name) => Object.keys(spawn_tile_loc).indexOf(name);
@@ -315,11 +316,11 @@
 	    personas[persona_name] = new_sprite;
 	    // The physics sprite still does the moving; a peg in the persona's color is drawn on it.
 	    new_sprite.setVisible(false);
-	    pegs[persona_name] = this.add.sprite(0, 0, "pegs", pegRow(i, "d") * 3).setOrigin(0.5, 1).setScale(2.5);
+	    pegs[persona_name] = this.add.sprite(0, 0, "pegs", pegRow(i, "d") * 3).setOrigin(0.5, 1).setScale(3);
 	    syncPeg(persona_name);
 	    pronunciatios[persona_name] = this.add.text(
 	                                   new_sprite.body.x - 6, 
-	                                   new_sprite.body.y - 42 - 32, // DEBUG 1 --- I added 32 offset on Dec 29. 
+	                                   new_sprite.body.y - 42 - 32 - PEG_LIFT, // DEBUG 1 --- I added 32 offset on Dec 29. 
 	                                   "🦁", {
 	                                   font: "28px monospace", 
 	                                   fill: "#000000", 
@@ -494,7 +495,7 @@
 
 	        syncPeg(curr_persona_name);
         curr_pronunciatio.x = curr_persona.body.x - 6; 
-          curr_pronunciatio.y = curr_persona.body.y - 42 - 32; // DEBUG 1 --- I added 32 offset on Dec 29. 
+          curr_pronunciatio.y = curr_persona.body.y - 42 - 32 - PEG_LIFT; // DEBUG 1 --- I added 32 offset on Dec 29. 
 
           const peg = pegs[curr_persona_name], ci = pegIndex(curr_persona_name);
           if (anims_direction) {
