@@ -102,6 +102,15 @@
 	let anims_direction;
 	let pre_anims_direction;
 	let pre_anims_direction_dict = {};
+	let pegs = {};   // persona name -> visible peg sprite
+	const PEG_FACING = {d: 0, l: 1, r: 2, u: 3};
+	const pegRow = (i, d) => (i % 8) * 4 + PEG_FACING[d || "d"];
+	const pegIndex = (name) => Object.keys(spawn_tile_loc).indexOf(name);
+	// Feet on the bottom edge of the persona's tile, centered on it.
+	function syncPeg(name) {
+	  const b = personas[name].body;
+	  pegs[name].setPosition(b.x + tile_width / 2, b.y + tile_width);
+	}
 
 	let curr_maze = "the_ville";
 
@@ -183,7 +192,10 @@
 	  // see: https://labs.phaser.io/view.html?src=src/animation/single%20sprite%20sheet.js
 	  // Joon: Technically, I think this guy had the best tutorial for atlas: 
 	  //       https://www.youtube.com/watch?v=fdXcD9X4NrQ&ab_channel=MorganPage
-	  this.load.atlas("atlas", 
+	  // Peg sprites (tools/peg-sprite): 16x24 frames, 3 per row (stand, step, step),
+  // rows = color index * 4 + facing (down, left, right, up).
+  this.load.spritesheet("pegs", "{% static 'assets/flat/pegs.png' %}", {frameWidth: 16, frameHeight: 24});
+  this.load.atlas("atlas", 
 	                  "https://mikewesthad.github.io/phaser-3-tilemap-blog-posts/post-1/assets/atlas/atlas.png", 
 	                  "https://mikewesthad.github.io/phaser-3-tilemap-blog-posts/post-1/assets/atlas/atlas.json");
 	}
@@ -301,6 +313,10 @@
 	                         .setOffset(0, 32); // DEBUG 1 --- I added 32 offset on Dec 29. 
 	    // Here, we are creating the persona and its pronunciatio sprites.
 	    personas[persona_name] = new_sprite;
+	    // The physics sprite still does the moving; a peg in the persona's color is drawn on it.
+	    new_sprite.setVisible(false);
+	    pegs[persona_name] = this.add.sprite(0, 0, "pegs", pegRow(i, "d") * 3).setOrigin(0.5, 1).setScale(2.5);
+	    syncPeg(persona_name);
 	    pronunciatios[persona_name] = this.add.text(
 	                                   new_sprite.body.x - 6, 
 	                                   new_sprite.body.y - 42 - 32, // DEBUG 1 --- I added 32 offset on Dec 29. 
@@ -311,6 +327,12 @@
 	                                   backgroundColor: "#ffffff",
 	                                   border:"solid",
 	                                   borderRadius:"10px"}).setDepth(3);
+	  }
+
+	  // Peg walk cycles, one per color and facing.
+	  for (let c = 0; c < 8; c++) for (const d of ["d", "l", "r", "u"]) {
+	    const row = pegRow(c, d);
+	    this.anims.create({key: `peg-${c}-${d}`, frames: this.anims.generateFrameNumbers("pegs", {frames: [row * 3 + 1, row * 3, row * 3 + 2, row * 3]}), frameRate: 8, repeat: -1});
 	  }
 
 	  // Create the player's walking animations from the texture atlas. These are
@@ -497,26 +519,18 @@
 	        	anims_direction = "";
 	        }
 
-	        curr_pronunciatio.x = curr_persona.body.x - 6; 
+	        syncPeg(curr_persona_name);
+        curr_pronunciatio.x = curr_persona.body.x - 6; 
           curr_pronunciatio.y = curr_persona.body.y - 42 - 32; // DEBUG 1 --- I added 32 offset on Dec 29. 
 
-          if (anims_direction == "l") {
-			      curr_persona.anims.play("misa-left-walk", true);
-			    } else if (anims_direction == "r") {
-			      curr_persona.anims.play("misa-right-walk", true);
-			    } else if (anims_direction == "u") {
-			      curr_persona.anims.play("misa-back-walk", true);
-			    } else if (anims_direction == "d") {
-			      curr_persona.anims.play("misa-front-walk", true);
-			    } else {
-			      curr_persona.anims.stop();
-
-			      // If we were moving, pick an idle frame to use
-			      if (pre_anims_direction_dict[curr_persona_name] == "l") curr_persona.setTexture("atlas", "misa-left");else
-			      if (pre_anims_direction_dict[curr_persona_name] == "r") curr_persona.setTexture("atlas", "misa-right");else
-			      if (pre_anims_direction_dict[curr_persona_name] == "u") curr_persona.setTexture("atlas", "misa-back");else
-			      if (pre_anims_direction_dict[curr_persona_name] == "d") curr_persona.setTexture("atlas", "misa-front");
-			    };
+          const peg = pegs[curr_persona_name], ci = pegIndex(curr_persona_name);
+          if (anims_direction) {
+            peg.anims.play(`peg-${ci % 8}-${anims_direction}`, true);
+          } else {
+            // Standing: the idle frame facing the last way it walked.
+            peg.anims.stop();
+            peg.setFrame(pegRow(ci, pre_anims_direction_dict[curr_persona_name]) * 3);
+          };
 
 	      } 
 	      else {
@@ -528,6 +542,7 @@
 	          let curr_persona = personas[curr_persona_name];
 	          curr_persona.body.x = movement_target[curr_persona_name][0];
 	          curr_persona.body.y = movement_target[curr_persona_name][1];
+	          syncPeg(curr_persona_name);
 	        }
 	        phase = "process";
 	        execute_count = execute_count_max + 1;

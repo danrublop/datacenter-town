@@ -16,15 +16,17 @@
   font-weight: 300 800; font-display: swap; font-style: normal;
 }
 :root {
-  --paper: #eef2ec;
-  --panel: #fbfcfa;
+  --paper: #f1f2f4;
+  --panel: #ffffff;
   --hover: color-mix(in srgb, var(--paper) 55%, var(--panel));
-  --ink: #1d2a22;
-  --muted: #5d6b62;
-  --faint: #8a978f;
-  --line: #d3dbd1;
-  --moss: #2f7a55;
-  --moss-soft: #dcebe1;
+  --ink: #1f2328;
+  --muted: #5f6670;
+  --faint: #8b929b;
+  --line: #dcdfe3;
+  --moss: #2b2f36;
+  --moss-soft: #e4e6ea;
+  --up: #1f9d55;
+  --down: #d93636;
   --amber: #b87a0c;
   --amber-soft: #f6e8c8;
   --brick: #a23d2c;
@@ -74,15 +76,15 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #141a16; --panel: #1b231e; --ink: #e3eae4; --muted: #9aa89f;
-    --faint: #6f7d74; --line: #2b372f; --moss: #5dba86; --moss-soft: #1f3a2b;
+    --paper: #141517; --panel: #1c1d20; --ink: #e6e7ea; --muted: #a0a4ab;
+    --faint: #6f747c; --line: #2c2e33; --moss: #e6e7ea; --moss-soft: #2c2e33; --up: #3ecf7a; --down: #ff5c5c;
     --amber: #e3a93c; --amber-soft: #3a2f16; --brick: #e27a66;
     --brick-soft: #3d221d; --grass: #3f5a37; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #141a16; --panel: #1b231e; --ink: #e3eae4; --muted: #9aa89f;
-  --faint: #6f7d74; --line: #2b372f; --moss: #5dba86; --moss-soft: #1f3a2b;
+  --paper: #141517; --panel: #1c1d20; --ink: #e6e7ea; --muted: #a0a4ab;
+  --faint: #6f747c; --line: #2c2e33; --moss: #e6e7ea; --moss-soft: #2c2e33; --up: #3ecf7a; --down: #ff5c5c;
   --amber: #e3a93c; --amber-soft: #3a2f16; --brick: #e27a66;
   --brick-soft: #3d221d; --grass: #3f5a37; color-scheme: dark;
 }
@@ -151,7 +153,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--panel);
   min-height: 0; display: flex; flex-direction: column;
 }
-.map-wrap { position: relative; overflow: hidden; aspect-ratio: 1500 / 800; background: var(--grass); }
+.map-wrap { position: relative; overflow: hidden; aspect-ratio: 1500 / 800; background: #fff; }
 .map-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .map-wrap iframe.backdrop { filter: blur(5px) saturate(.85); transform: scale(1.05); pointer-events: none; }
 .map-wrap:has(#map-empty[hidden])::after {
@@ -244,7 +246,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .agent .doing b { font-weight: var(--w-bold); }
 .agent .doing.saved { color: var(--faint); }
 /* An agent's latest stance move: ▲ toward support, ▼ toward opposed, ● no change. */
-.stance-arrow { width: 14px; height: 14px; flex: none; overflow: visible; }
+.stance-arrow { width: 18px; height: 18px; flex: none; overflow: visible; }
 
 /* ---------- inspector ---------- */
 .board {
@@ -259,7 +261,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .col-right { flex: 1 1 0; min-width: 0; }
 .map-card {
   flex: none; overflow: hidden; height: var(--top);
-  container-type: size; background: var(--grass);
+  container-type: size; background: var(--panel);
 }
 .map-card .map-wrap { width: min(100cqw, 100cqh * 1500 / 800); margin: auto; }
 #inspector { flex: 1; min-height: 0; height: auto; contain: size; }
@@ -303,7 +305,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Key for the agents' stance arrows, as on the Whisper trail. */
 .roster-title { display: flex; align-items: center; }
 .stance-key { margin-left: auto; display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--fs-meta); font-weight: var(--w-medium); color: var(--faint); cursor: default; }
-.stance-key .stance-arrow { width: 12px; height: 12px; }
+.stance-key .stance-arrow { width: 16px; height: 16px; }
 .stance-key .stance-arrow + .stance-arrow, .stance-key .stance-arrow:not(:first-child) { margin-left: var(--space-2); }
 .who {
   display: flex; gap: var(--space-2); align-items: center; padding: 0 var(--space-3) 0 var(--card-x); width: 100%;
@@ -647,7 +649,7 @@ details.log-err pre { margin: 2px 0 var(--space-2); font-size: var(--fs-meta); c
 .viewing .grow-text { flex: 1; min-width: 240px; }
 .replay-box { display: flex; gap: var(--space-2); align-items: center; justify-content: center; flex-wrap: wrap; }
 .replay-box input { width: 90px; border: 0; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-2); }
-.map-tag { position: absolute; z-index: 2; left: 10px; top: 10px; background: rgb(20 26 22 / .7); color: #fff; font-size: var(--fs-meta); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); }
+.map-tag { position: absolute; z-index: 2; left: 10px; bottom: 10px; background: rgb(31 35 40 / .75); color: #fff; font-size: var(--fs-meta); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); }
 .env-badge { background: var(--amber-soft); color: var(--amber); font-size: var(--fs-meta); font-weight: var(--w-medium); padding: 0 var(--space-1); border-radius: var(--radius-inner); }
 /* Zero-width text gives icon-only buttons the labelled buttons' height. */
 .icon-btn { display: inline-flex; align-items: center; padding-inline: var(--space-2); }
@@ -890,8 +892,8 @@ details.log-err pre { margin: 2px 0 var(--space-2); font-size: var(--fs-meta); c
 .trail-axis .axis.day { fill: var(--faint); font-weight: var(--w-regular); }
 .trail-axis .axis-name { fill: var(--muted); }
 .tr-shift { stroke: var(--panel); stroke-width: 1.5; stroke-linejoin: round; }
-.tr-shift.up { fill: var(--moss); }
-.tr-shift.down { fill: var(--brick); }
+.tr-shift.up { fill: var(--up); }
+.tr-shift.down { fill: var(--down); }
 .tr-shift.same { fill: var(--faint); }
 .trail-key text { fill: var(--muted); font-size: var(--fs-axis); }
 .tr-node.tr-later { opacity: .3; }
@@ -907,7 +909,7 @@ dialog {
   color: var(--ink); padding: var(--space-5); width: min(460px, calc(100vw - 32px));
   max-height: calc(100vh - 32px); overflow: auto;
 }
-dialog::backdrop { background: rgb(20 26 22 / .45); }
+dialog::backdrop { background: rgb(20 22 26 / .45); }
 /* Dropdowns overflow the dialog rather than scrolling it. */
 #run-dialog { width: min(600px, calc(100vw - 32px)); }
 @media (min-height: 560px) and (min-width: 600px) { #run-dialog { overflow: visible; } }
@@ -1097,6 +1099,47 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* ---------- flat skin ----------
+   One white surface. Panels run edge to edge and are split by hairlines (the
+   board's background shows through 1px gaps); rows are split by thin lines;
+   hover and selection are a soft tint. Pixel art stays on the map and portraits. */
+body { background: var(--panel); }
+.top { margin: 0; border-radius: 0; border-bottom: 1px solid var(--divider, var(--line)); }
+.board { gap: 1px; padding: 0; background: var(--divider, var(--line)); }
+/* Dark mode: black dividers. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --divider: #000; } }
+:root[data-theme="dark"] { --divider: #000; }
+/* The map sits in from its panel's edges, with rounded corners. */
+.map-card { padding: var(--space-2); }
+.map-card .map-wrap { border-radius: 6px; }
+.col-left, .col-right { gap: 1px; }
+.board .card { border-radius: 0; }
+/* Rows: no boxes, a divider under each, a tint on hover. */
+:is(#inspector > .roster .agent, .plan-row, #a-mind .convo-row, .m-card, #p-convos .convo-row,
+    #p-events .w-item, .c-row, details.log-step, .s-card, .u-card) {
+  background: none; border-radius: var(--radius-inner);
+}
+:is(#p-convos .convo-row, #p-events .w-item, .c-row, details.log-step, .plan-row, #a-mind .convo-row, .m-card) {
+  box-shadow: inset 0 -1px 0 var(--line); border-radius: 0;
+}
+:is(#inspector > .roster .agent, #p-convos .convo-row, #p-events .w-item, #a-mind button.convo-row):hover { background: var(--hover); }
+.charts-body > section:not([hidden]), .social-panel, .trail-side, .trail-panel { background: none; }
+.reader, .reader-head { background: none; }
+/* Buttons: flat, a hairline border; the primary one is solid ink. */
+.btn { border: 1px solid var(--line); border-radius: 6px; box-shadow: none; }
+.btn:hover:not(:disabled) { border-color: var(--faint); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+.btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink), var(--panel) 15%); border-color: transparent; }
+.reader-head .back { border-color: var(--line); background: var(--panel); }
+/* Tabs: plain text; the selected one is underlined. */
+.tab { border-radius: 0; background: none; }
+.tab:hover { background: none; color: var(--muted); }
+.tab[aria-selected="true"], .tab[aria-selected="true"]:hover { background: none; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+.tabs { padding-inline: var(--space-3); }
+.faces img + img { margin-left: -4px; }
+.map-wrap:has(#map-empty[hidden])::after { box-shadow: none; }
+.map-empty { background: rgb(20 22 26 / .35); }
 </style>
 </head>
 <body>
@@ -1379,7 +1422,7 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
 <div class="chart-tip" id="chart-tip" hidden></div>
 
 <script>
-const SPRITES = "{% static 'assets/characters/profile/' %}";
+const FACES = "{% static 'assets/flat/' %}";
 const HISTORIES = {{ histories_json|safe }};
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -1416,8 +1459,10 @@ function toast(msg) {
   toast.t = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
+// Peg portrait in the agent's palette color (same roster order as agentColor).
 function sprite(name) {
-  return `${SPRITES}${name.replace(/ /g, "_")}.png`;
+  const i = rosterOrder().indexOf(name);
+  return `${FACES}face-${Math.max(0, i) % STANCE_COLORS.length}.png`;
 }
 
 function parseGameTime(s) {
@@ -2611,7 +2656,7 @@ function trailShift(name, step) {
 // The mark on a person's corner: ▲ toward support, ▼ toward opposed, ● no change.
 function trailShiftMark(dir, cx, cy, r) {
   const f = (v) => v.toFixed(1);
-  if (dir === "same") return `<circle class="tr-shift same" cx="${f(cx)}" cy="${f(cy)}" r="${f(r * 0.75)}"/>`;
+  if (dir === "same") return `<rect class="tr-shift same" x="${f(cx - r * 0.7)}" y="${f(cy - r * 0.7)}" width="${f(r * 1.4)}" height="${f(r * 1.4)}"/>`;
   const t = dir === "up" ? -1 : 1;
   return `<path class="tr-shift ${dir}" d="M${f(cx)} ${f(cy + t * r)}L${f(cx + r)} ${f(cy - t * r * 0.8)}L${f(cx - r)} ${f(cy - t * r * 0.8)}Z"/>`;
 }
@@ -2706,21 +2751,19 @@ new ResizeObserver(() => { if (data) renderTrail(); }).observe($("trail-chart"))
 /* ---------------- stance graph ---------------- */
 
 const STANCE_COLORS = ["#2f7d52", "#b4552d", "#3b6ea5", "#8a5bb0",
-                       "#b08b1e", "#2a8f8f", "#a8456b", "#6b6f3f"];
-// Residents' colors match their sprites' clothes; anyone else takes the palette in roster order.
-const AGENT_COLORS = {
-  "Maya Okonkwo": "#4a7fb5",
-  "Elena Chen": "#1f3f8f",
-  "Luis Hernandez": "#1f9a9a",
-  "Denise Brooks": "#c0458f",
-  "Rachel Nguyen": "#5d646e",
-  "Tom Whitaker": "#b8342c",
-  "Aisha Rahman": "#5aa02c",
-  "Marcus Williams": "#b8931c",
-};
+                       "#b08b1e", "#2a8f8f", "#a8456b", "#c8333a"];
+// Agents take the palette in roster order, the same colors as their peg sprites.
+
+// The loaded run's agents, or before one loads, the saved run the roster previews.
+function rosterOrder() {
+  if (data?.sim?.persona_order?.length) return data.sim.persona_order;
+  const runs = data?.sims || [];
+  const next = runs.find((r) => r.maze === "the_ville_datacenter" && r.agents?.length) || runs.find((r) => r.agents?.length);
+  return next?.agents || [];
+}
 function agentColor(name) {
-  const i = (data?.sim?.persona_order || []).indexOf(name);
-  return AGENT_COLORS[name] || STANCE_COLORS[Math.max(0, i) % STANCE_COLORS.length];
+  const i = rosterOrder().indexOf(name);
+  return STANCE_COLORS[Math.max(0, i) % STANCE_COLORS.length];
 }
 // Fallback until the server sends the bands with the network.
 const STANCE_BANDS = [[0, 19, "Very strong opposition", "#A32834"], [20, 39, "Moderate opposition", "#DD645D"],
@@ -3722,9 +3765,7 @@ function renderRoster() {
   let roster = data?.sim?.roster || [];
   const preview = !roster.length;
   if (preview) {
-    const runs = data?.sims || [];
-    const next = runs.find((r) => r.maze === "the_ville_datacenter" && r.agents?.length) || runs.find((r) => r.agents?.length);
-    roster = (next?.agents || []).map((name) => ({name}));
+    roster = rosterOrder().map((name) => ({name}));
     if (roster.length) showRoster(true);
   }
   const keyMark = (dir) => `<svg class="stance-arrow" viewBox="-6 -6 12 12" aria-hidden="true">${trailShiftMark(dir, 0, 0, 4.5)}</svg>`;
@@ -3827,7 +3868,7 @@ function agentStance(name) {
 // A stance change for a tooltip: +x green, −x red, None gray.
 function stanceChangeHtml(d) {
   if (d == null) return `<span style="color:var(--faint)">First reading</span>`;
-  const color = d > 0 ? "var(--moss)" : d < 0 ? "var(--brick)" : "var(--faint)";
+  const color = d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--faint)";
   return `<span style="color:${color}">${d === 0 ? "None" : `${d > 0 ? "+" : "−"}${Math.abs(d)}`}</span>`;
 }
 // A stance reading as a tooltip: score, its position on the scale, and the change since the reading before.
