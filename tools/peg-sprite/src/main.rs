@@ -21,13 +21,9 @@ const COLORS: [u32; 8] = [
     0x2f7d52, 0xb4552d, 0x3b6ea5, 0x8a5bb0, 0xb08b1e, 0x2a8f8f, 0xa8456b, 0xc8333a,
 ];
 
-// Eye style baked into pegs.png. 0 none, 1 dots, 2 tall, 3 dots lower,
-// 4 wide-set, 5 shiny, 6 dots + smile, 7 happy ^ ^.
-const EYES: u8 = 2;
-
 // Tones painted on the template; each becomes a shade of the agent color.
 #[derive(Clone, Copy, PartialEq)]
-enum T { Empty, Outline, Shadow, Mid, Light, Shine, Eye, Glint }
+enum T { Empty, Outline, Shadow, Mid, Light, Shine, Eye }
 
 type Frame = [[T; FW]; FH];
 
@@ -42,7 +38,7 @@ fn fill(f: &mut Frame, x0: i32, y0: i32, x1: i32, y1: i32) {
     }
 }
 
-fn frame(dir: Dir, step: usize, eyes: u8) -> Frame {
+fn frame(dir: Dir, step: usize) -> Frame {
     let mut f = [[T::Empty; FW]; FH];
     // Walk: step 1 = one foot forward, step 2 = the other.
     let swing: i32 = match step { 1 => 1, 2 => -1, _ => 0 };
@@ -93,13 +89,13 @@ fn frame(dir: Dir, step: usize, eyes: u8) -> Frame {
             }
         }
     }
-    head(&mut f, dir, bob, eyes);
+    head(&mut f, dir, bob);
     f
 }
 
 // The head is drawn last, over the body, with its own full outline, so it
 // never blends into the shoulders.
-fn head(f: &mut Frame, dir: Dir, bob: i32, eyes: u8) {
+fn head(f: &mut Frame, dir: Dir, bob: i32) {
     let (cx, cy, r) = (8.0f32, 6.0 + bob as f32, 4.6f32);
     let inside = |x: i32, y: i32| {
         let (dx, dy) = (x as f32 + 0.5 - cx, y as f32 + 0.5 - cy);
@@ -120,37 +116,11 @@ fn head(f: &mut Frame, dir: Dir, bob: i32, eyes: u8) {
     let (sx, sy) = (10, (hy - 3) as usize);
     f[sy][sx] = T::Shine; f[sy][sx + 1] = T::Shine; f[sy + 1][sx] = T::Shine;
     // Eyes sit high on the head and show which way the peg faces; none from behind.
-    // Eye styles (see EYE_STYLES). Side views show only the near eye.
-    let ey = hy;
-    let cols: &[i32] = match (dir, eyes) {
-        (Dir::Up, _) | (_, 0) => &[],
-        (Dir::Down, 4) => &[5, 10],
-        (Dir::Down, 7) => &[5, 9],
-        (Dir::Down, _) => &[6, 9],
-        (Dir::Right, 7) => &[9],
-        (Dir::Right, _) => &[10],
-        (Dir::Left, 7) => &[4],
-        (Dir::Left, _) => &[5],
-    };
-    let mut put = |x: i32, y: i32, t: T| {
-        if x >= 0 && y >= 0 && x < FW as i32 && y < FH as i32 { f[y as usize][x as usize] = t; }
-    };
+    // Two-pixel-tall eyes high on the head show which way the peg faces; none from behind.
+    let cols: &[i32] = match dir { Dir::Down => &[6, 9], Dir::Right => &[10], Dir::Left => &[5], Dir::Up => &[] };
     for &x in cols {
-        match eyes {
-            2 => { put(x, ey - 1, T::Eye); put(x, ey, T::Eye); }           // tall
-            3 => put(x, ey + 1, T::Eye),                                    // lower
-            5 => { put(x, ey - 1, T::Glint); put(x, ey, T::Eye); }         // shiny
-            7 => { put(x, ey, T::Eye); put(x + 1, ey - 1, T::Eye); put(x + 2, ey, T::Eye); } // happy ^
-            _ => put(x, ey, T::Eye),                                        // dots
-        }
-    }
-    if eyes == 6 {                                                          // dots + smile
-        match dir {
-            Dir::Down => { put(7, ey + 2, T::Eye); put(8, ey + 2, T::Eye); }
-            Dir::Right => put(11, ey + 2, T::Eye),
-            Dir::Left => put(4, ey + 2, T::Eye),
-            Dir::Up => {}
-        }
+        f[(hy - 1) as usize][x as usize] = T::Eye;
+        f[hy as usize][x as usize] = T::Eye;
     }
 }
 
@@ -200,7 +170,6 @@ fn palette(color: u32, t: T) -> [u8; 4] {
         T::Light => toward(c, 255.0, 0.08),
         T::Shine => toward(c, 255.0, 0.7),
         T::Eye => [0x1f, 0x29, 0x33, 255],
-        T::Glint => [255, 255, 255, 255],
     }
 }
 
@@ -215,8 +184,7 @@ fn save(path: &str, w: usize, h: usize, px: &[u8]) {
 fn main() {
     let out = std::env::args().nth(1).unwrap_or_else(|| ".".into());
     let dirs = [Dir::Down, Dir::Left, Dir::Right, Dir::Up];
-    if std::env::args().nth(2).as_deref() == Some("variants") { variants(&out); return; }
-    let frames: Vec<Vec<Frame>> = dirs.iter().map(|&d| (0..FRAMES).map(|s| frame(d, s, EYES)).collect()).collect();
+    let frames: Vec<Vec<Frame>> = dirs.iter().map(|&d| (0..FRAMES).map(|s| frame(d, s)).collect()).collect();
 
     let (w, h) = (FW * FRAMES, FH * DIRS * COLORS.len());
     let mut sheet = vec![0u8; w * h * 4];
@@ -269,31 +237,3 @@ fn main() {
     println!("wrote {out}/pegs.png ({w}x{h}) and pegs-preview.png");
 }
 
-// Every eye style side by side: one row per style, showing front, side and
-// front-walking in three colors, 8x.
-fn variants(out: &str) {
-    let k = 8;
-    let picks = [(Dir::Down, 0), (Dir::Right, 0), (Dir::Down, 1)];
-    let colors = [COLORS[3], COLORS[0], COLORS[7]];
-    let cols = picks.len() * colors.len();
-    let (w, h) = (cols * (FW + 2) * k, 8 * (FH + 2) * k);
-    let mut px = vec![255u8; w * h * 4];
-    for style in 0..8u8 {
-        for (ci, &color) in colors.iter().enumerate() {
-            for (pi, &(d, st)) in picks.iter().enumerate() {
-                let fr = frame(d, st, style);
-                let (ox, oy) = ((ci * picks.len() + pi) * (FW + 2) + 1, style as usize * (FH + 2) + 1);
-                for y in 0..FH { for x in 0..FW {
-                    let c = palette(color, fr[y][x]);
-                    if c[3] == 0 { continue; }
-                    for yy in 0..k { for xx in 0..k {
-                        let i = (((oy + y) * k + yy) * w + (ox + x) * k + xx) * 4;
-                        px[i..i + 4].copy_from_slice(&c);
-                    }}
-                }}
-            }
-        }
-    }
-    save(&format!("{out}/pegs-eyes.png"), w, h, &px);
-    println!("wrote {out}/pegs-eyes.png");
-}

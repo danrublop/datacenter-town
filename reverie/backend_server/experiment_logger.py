@@ -67,7 +67,7 @@ class ExperimentLogger:
       json.dump(manifest, f, indent=2)
 
   def log_conversation(self, step, curr_time, speakers, utterances, location=None,
-                       summary=None):
+                       summary=None, duration_min=None):
     if step is None:
       step = self.current_step
     # Deduplicate init/target double-calls within a step.
@@ -84,6 +84,7 @@ class ExperimentLogger:
       "utterances": utterances,
       "location": location,
       "summary": summary,
+      "duration_min": duration_min,
     }
     self._append_jsonl("conversations.jsonl", row)
     self.new_conversations.append(row)

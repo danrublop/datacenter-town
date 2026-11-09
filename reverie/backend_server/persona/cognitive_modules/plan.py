@@ -884,6 +884,7 @@ def _chat_react(maze, persona, focused_event, reaction_mode, personas):
       utterances=convo,
       location=str(init_persona.scratch.act_address),
       summary=convo_summary,
+      duration_min=duration_min,
     )
   log.info(
     "Conversation %s <-> %s (%s turns, ~%s min): %s",

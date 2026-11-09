@@ -31,7 +31,6 @@
   --amber-soft: #f6e8c8;
   --brick: #a23d2c;
   --brick-soft: #f4dcd6;
-  --grass: #6b8f5e;
   --radius-sm: 10px;
   --card-gap: 8px;
   --radius-card: 10px;
@@ -79,14 +78,14 @@
     --paper: #141517; --panel: #1c1d20; --ink: #e6e7ea; --muted: #a0a4ab;
     --faint: #6f747c; --line: #2c2e33; --moss: #e6e7ea; --moss-soft: #2c2e33; --up: #3ecf7a; --down: #ff5c5c;
     --amber: #e3a93c; --amber-soft: #3a2f16; --brick: #e27a66;
-    --brick-soft: #3d221d; --grass: #3f5a37; color-scheme: dark;
+    --brick-soft: #3d221d; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #141517; --panel: #1c1d20; --ink: #e6e7ea; --muted: #a0a4ab;
   --faint: #6f747c; --line: #2c2e33; --moss: #e6e7ea; --moss-soft: #2c2e33; --up: #3ecf7a; --down: #ff5c5c;
   --amber: #e3a93c; --amber-soft: #3a2f16; --brick: #e27a66;
-  --brick-soft: #3d221d; --grass: #3f5a37; color-scheme: dark;
+  --brick-soft: #3d221d; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -112,7 +111,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   height: var(--bar-h); gap: var(--space-4); padding: 0 var(--card-x);
   background: var(--panel);
-  margin: var(--card-gap) var(--card-gap) 0; border-radius: var(--radius-card);
+  margin: 0; border-bottom: 1px solid var(--divider);
 }
 .sim h1 { margin: 0; font-size: var(--fs-head); font-weight: var(--w-medium); letter-spacing: -0.01em; }
 .sim { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
@@ -138,12 +137,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :is(#btn-settings, #btn-whisper, #w-new):hover:not(:disabled) { border-color: transparent; background: var(--hover); color: var(--ink); }
 #s-theme { margin: 0; }
 .btn {
-  border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--panel); border-radius: 6px;
   padding: var(--space-2) var(--space-3); cursor: pointer; font-weight: var(--w-medium); white-space: nowrap;
 }
-.btn:hover:not(:disabled) { border-color: var(--muted); }
 .btn:disabled { opacity: .45; cursor: default; }
-.btn.primary { background: var(--moss); border-color: var(--moss); color: #fff; }
 .btn.danger { color: var(--brick); }
 .btn.small { padding: var(--space-1) var(--space-2); font-size: var(--fs-body); }
 .step-presets { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2); }
@@ -153,17 +150,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: var(--panel);
   min-height: 0; display: flex; flex-direction: column;
 }
-.map-wrap { position: relative; overflow: hidden; aspect-ratio: 1500 / 800; background: #fff; }
+.map-wrap { position: relative; overflow: hidden; aspect-ratio: 1500 / 800; background: var(--panel); }
 .map-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .map-wrap iframe.backdrop { filter: blur(5px) saturate(.85); transform: scale(1.05); pointer-events: none; }
-.map-wrap:has(#map-empty[hidden])::after {
-  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  box-shadow: inset 0 0 0 1px var(--panel), inset 0 0 28px 4px rgb(10 14 12 / .45);
-}
 .map-empty {
   position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
   color: #f1f6ee; padding: var(--space-5);
-  background: radial-gradient(ellipse at center, rgb(20 26 22 / .28) 35%, rgb(20 26 22 / .62) 100%);
+  background: rgb(20 22 26 / .35);
 }
 .map-empty .btn, .map-empty input { color: var(--ink); }
 .map-empty p { margin: 0 0 12px; font-size: var(--fs-body); }
@@ -171,22 +164,20 @@ button, input, select, textarea { font: inherit; color: inherit; }
 #inspector, #charts, #activity { padding-block: var(--card-y); }
 /* Keeps scrolling lists clear of the card's rounded bottom corner. */
 #inspector, #activity { padding-bottom: var(--list-bottom); }
-#activity:has(#p-console:not([hidden])) { padding-bottom: 0; }
 /* Bottom fade only while more is below; .at-end is set from script. */
-#activity > .pane:is(#p-convos, #p-events, #p-log), #inspector > .pane:is(#a-mind, #a-plan, #a-profile) {
+#inspector > .pane:is(#a-mind, #a-plan, #a-profile) {
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-6)), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-6)), transparent);
 }
-#activity > .pane:is(#p-convos, #p-events, #p-log).at-end, #inspector > .pane.at-end,
-#activity > .pane:is(#p-convos:has(> .reader), #p-events:has(> #w-list > .reader)) { -webkit-mask-image: none; mask-image: none; }
-#p-convos > .convo-fade, #w-list > .convo-fade, #p-log > .convo-fade, #inspector > .pane > .convo-fade { display: none; }
+#inspector > .pane.at-end { -webkit-mask-image: none; mask-image: none; }
+#inspector > .pane > .convo-fade { display: none; }
 .tabs { display: flex; align-items: center; min-height: var(--bar-h); gap: var(--space-half); padding: 0 calc(var(--card-x) - var(--space-3)); overflow-x: auto; overflow-y: hidden; }
 .tab {
-  border: 0; background: none; padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); cursor: pointer; color: var(--faint);
+  border: 0; background: none; padding: var(--space-1) var(--space-3); border-radius: 0; cursor: pointer; color: var(--faint);
   font-size: var(--fs-head); font-weight: var(--w-medium); white-space: nowrap; transition: color 120ms ease-out, background-color 120ms ease-out;
 }
-.tab:hover { color: var(--muted); background: var(--hover); }
-.tab[aria-selected="true"], .tab[aria-selected="true"]:hover { color: var(--ink-head); background: var(--paper); }
+.tab:hover { color: var(--muted); }
+.tab[aria-selected="true"], .tab[aria-selected="true"]:hover { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
 #activity > .tabs { position: relative; }
 /* Starts at the card inset, matching the space after the last tab. */
 .tabs-search { flex: 0 1 280px; min-width: 120px; margin: 0 auto 0 var(--space-3); display: flex; padding: 0; }
@@ -253,8 +244,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex; container-type: size;
   align-items: stretch; gap: var(--card-gap); padding: var(--card-gap); background: var(--paper);
 }
-.col-left, .col-right { display: flex; flex-direction: column; gap: var(--card-gap); min-height: 0; }
-.board .card { border-radius: var(--radius-card); overflow: hidden; }
+.col-left, .col-right { display: flex; flex-direction: column; gap: 1px; min-height: 0; }
+.board .card { overflow: hidden; }
 /* Map and charts share one height so both columns split on the same line. */
 .col-left, #charts { --top: min((100cqw - 3 * var(--card-gap)) / 2 * 800 / 1500, (100cqh - 3 * var(--card-gap)) / 2); }
 .col-left { flex: none; width: calc(var(--top) * 1500 / 800); }
@@ -270,7 +261,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 #activity, #charts { min-height: 0; contain: size; }
 .charts-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .charts-body > section:not([hidden]) { flex: 1 0 auto; display: flex; flex-direction: column; min-height: 0; }
-#stance, #social-network, #social-grid, #trail-chart { position: relative; min-height: 0; }
+#stance, #social-network, #trail-chart { position: relative; min-height: 0; }
 .empty-viz { position: absolute; inset: 0; }
 .empty-viz .ghost { stroke: var(--line); fill: none; }
 .empty-viz .ghost-fill { fill: var(--line); opacity: .45; }
@@ -456,7 +447,7 @@ pre, .mono { font-family: var(--mono); font-size: var(--fs-meta); line-height: 1
 /* Two faces wide even with one, so row text aligns. */
 .convo-row .faces { min-width: 50px; }
 .faces img { width: 30px; height: 30px; border-radius: var(--radius-sm); background: var(--paper); box-shadow: 0 0 0 2px var(--panel); image-rendering: pixelated; object-fit: contain; }
-.faces img + img { margin-left: -10px; }
+.faces img + img { margin-left: -4px; }
 .convo-main { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .convo-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
 .convo-top .pair { color: var(--ink-head); font-weight: var(--w-medium); font-size: var(--fs-title); }
@@ -468,16 +459,13 @@ pre, .mono { font-family: var(--mono); font-size: var(--fs-meta); line-height: 1
   height: calc(var(--row2-h) + var(--space-1)); margin: 0 calc(-1 * var(--inner-x)); padding: var(--space-1) var(--inner-x) 0;
   background: var(--hover); border-radius: var(--radius-card) var(--radius-card) 0 0;
 }
-.reader-head .back { margin-left: auto; display: inline-flex; align-items: center; padding: var(--space-1) var(--space-3); flex: none; border-color: transparent; background: var(--paper); color: var(--ink-head); }
-.reader-head .back:hover { border-color: transparent; background: color-mix(in srgb, var(--paper), var(--ink) 6%); }
 .reader-head .faces { padding-top: 0; }
 .reader-title { min-width: 0; display: grid; line-height: 1.25; }
 .reader-title b { font-size: var(--fs-title); font-weight: var(--w-medium); color: var(--ink-head); }
 .reader-title > span { color: var(--faint); font-size: var(--fs-meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.reader-sum { display: flex; align-items: baseline; gap: var(--space-3); margin: 0 0 var(--space-3); color: var(--muted); font-size: var(--fs-sub); }
-.reader-sum > span:first-child { flex: 1; min-width: 0; }
 .reader-flag { flex: none; font-size: var(--fs-meta); font-weight: var(--w-medium); color: var(--amber); white-space: nowrap; }
 .chat { display: grid; gap: var(--space-3); }
+.chat-end { margin-top: var(--space-4); text-align: center; color: var(--faint); font-size: var(--fs-meta); }
 .msg { display: flex; gap: var(--space-2); align-items: flex-end; max-width: 85%; }
 .msg.right { flex-direction: row-reverse; margin-left: auto; }
 .msg > img { width: 32px; height: 32px; flex: none; border-radius: var(--radius-sm); background: var(--paper); image-rendering: pixelated; object-fit: contain; }
@@ -832,19 +820,7 @@ details.log-err pre { margin: 2px 0 var(--space-2); font-size: var(--fs-meta); c
 .social-node.selected .social-label { fill: var(--ink); font-weight: var(--w-bold); }
 .social-net.whisper .social-node:not(.reached) { opacity: .4; }
 .social-net.hl .social-node:not(.on) { opacity: .45; }
-.social-grid { position: absolute; inset: 0; margin: auto; display: grid; grid-template-columns: var(--lab, 20px) repeat(var(--n), minmax(0, 1fr)); grid-template-rows: 20px repeat(var(--n), minmax(0, 1fr)) 14px; gap: 2px; font-size: var(--fs-axis); }
-.social-grid img { width: 16px; height: 16px; border: 1.5px solid var(--who); border-radius: 3px; background: var(--paper); image-rendering: pixelated; object-fit: contain; place-self: center; }
 .panel-hint { flex: none; font-size: var(--fs-meta); line-height: 1.3; color: var(--faint); }
-.social-grid .cap { grid-column: 2 / -1; align-self: start; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-axis); color: var(--faint); line-height: 1; }
-.social-grid .row-head { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-1); min-width: 0; padding-right: 2px; }
-.social-grid .row-head img { flex: none; }
-.social-grid .row-head span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-axis); font-weight: var(--w-regular); color: var(--faint); }
-.social-grid .cell { display: grid; place-items: center; border-radius: var(--radius-xs); background: var(--panel); color: var(--ink); font-variant-numeric: tabular-nums; transition: opacity 120ms ease-out; }
-.social-grid .cell.has { cursor: pointer; color: #fff; font-weight: var(--w-medium); }
-.social-grid .cell.self { background: none; }
-.social-grid .cell.on { outline: 1.5px solid var(--ink); outline-offset: -1px; }
-.social-grid.hl .cell.has:not(.on) { opacity: .35; }
-.social-grid.has-sel:not(.hl) .cell.has:not(.sel) { opacity: .45; }
 .social-node text { fill: var(--ink); font-size: var(--fs-sub); text-anchor: middle;
   paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; }
 .social-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: var(--fs-meta); font-weight: var(--w-medium); color: var(--faint); }
@@ -853,9 +829,9 @@ details.log-err pre { margin: 2px 0 var(--space-2); font-size: var(--fs-meta); c
 .social-legend i.line { width: 16px; height: 3px; border-radius: 2px; background: var(--muted); }
 .social-legend .sep { flex-basis: 100%; height: 0; }
 @media (min-width: 1101px) {
-  #social-card:not([hidden]) { grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); grid-template-rows: minmax(0, 1fr); gap: var(--space-2); padding: 0; background: none; }
+  #social-card:not([hidden]) { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: var(--space-2); padding: 0; background: none; }
   .social-panel { min-height: 0; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2) var(--inner-x); background: var(--hover); border-radius: var(--radius-card); }
-  .social-panel > #social-grid, .social-panel > #social-network { flex: 1; }
+  .social-panel > #social-network { flex: 1; }
   #social-card .social-legend { flex: none; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: var(--space-1) var(--space-3); overflow: visible; }
 }
 
@@ -875,8 +851,6 @@ details.log-err pre { margin: 2px 0 var(--space-2); font-size: var(--fs-meta); c
 .trail-summary .ts { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; font-size: var(--fs-meta); font-weight: var(--w-medium); color: var(--faint); }
 .trail-summary .ts b { color: var(--ink); font-size: var(--fs-body); font-weight: var(--w-regular); font-variant-numeric: tabular-nums; }
 .trail-summary .ts.bad b { color: var(--brick); }
-.trail-summary .w-link { align-self: flex-start; margin-top: var(--space-1); font-size: var(--fs-meta); color: var(--muted); }
-.trail-summary .w-link:hover { color: var(--ink); }
 #trail-chart > svg { width: 100%; height: 100%; display: block; }
 .tr-you rect { fill: var(--ink); }
 .tr-you text { fill: var(--panel); font-size: var(--fs-meta); font-weight: var(--w-medium); }
@@ -978,7 +952,6 @@ details.w-seeds > summary::-webkit-details-marker { display: none; }
 .w-seed { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2); padding: var(--space-1) 0; font-size: var(--fs-sub); }
 .w-seed .who-list { font-weight: var(--w-medium); white-space: nowrap; }
 .w-seed .txt { color: var(--muted); overflow-wrap: anywhere; }
-.w-full { flex: none; max-height: 40%; overflow: auto; margin: var(--space-2) 0 0; font-size: var(--fs-body); line-height: 1.5; max-width: 70ch; }
 .reader-foot { flex: none; display: flex; justify-content: flex-end; padding: 0 0 var(--space-2); }
 .w-sub { margin: var(--space-3) 0 var(--space-1); font-size: var(--fs-meta); font-weight: var(--w-medium); color: var(--faint); }
 .w-mention { display: flex; gap: var(--space-3); align-items: flex-start; width: calc(100% + 2 * var(--space-2)); text-align: left; border: 0; background: none; padding: var(--space-2); margin-inline: calc(-1 * var(--space-2)); border-radius: var(--radius-card); cursor: pointer; }
@@ -987,7 +960,6 @@ details.w-seeds > summary::-webkit-details-marker { display: none; }
 .w-mention q { quotes: "\201C" "\201D"; }
 .w-mention img { width: 24px; height: 24px; border: 1.5px solid var(--who); border-radius: var(--radius-sm); background: var(--paper); image-rendering: pixelated; object-fit: contain; }
 .reader-head .w-actions { margin-left: auto; display: flex; gap: var(--space-1); }
-.reader-head .w-actions + .back { margin-left: 0; }
 .reader-head .w-actions .btn { padding: var(--space-1) var(--space-3); font-size: var(--fs-body); border-color: transparent; background: var(--paper); color: var(--ink-head); }
 .reader-head .w-actions .btn:hover:not(:disabled) { border-color: transparent; background: color-mix(in srgb, var(--paper), var(--ink) 6%); }
 .w-preview { display: flex; align-items: center; gap: var(--space-2); min-width: 0; margin-top: var(--space-2); padding: var(--space-2); border-radius: var(--radius-card); background: var(--paper); font-size: var(--fs-sub); }
@@ -1069,12 +1041,9 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
   .trail-panel > #trail-chart { flex: 1; }
   .trail-head { contain: none; grid-column: auto; }
   .trail-pick { flex: none; }
-  /* The picker reads as the card's title. */
-  .trail-side .trail-pick .dd-trigger { width: auto; height: auto; padding: 0; border: 0; background: none; font-size: var(--fs-title); font-weight: var(--w-medium); color: var(--ink-head); }
   .trail-side .trail-pick .dd-trigger .chev-icon { color: var(--faint); }
   .trail-side .trail-pick .dd-trigger .dd-name { flex: none; overflow: visible; mask-image: none; }
   #stance-card:not([hidden]) { grid-template-rows: minmax(0, 1fr); }
-  .trail-pick .dd-trigger { height: 24px; }
 }
 
 /* ---------- small screens ---------- */
@@ -1089,7 +1058,6 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
   #charts { flex: none; height: auto; contain: none; order: 2; }
   #stance { height: 300px; }
   #social-network { height: 420px; }
-  #social-grid { height: 300px; margin-top: var(--space-3); }
   #trail-chart { height: 300px; }
 }
 @media (max-width: 560px) {
@@ -1101,45 +1069,124 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
 }
 
 /* ---------- flat skin ----------
-   One white surface. Panels run edge to edge and are split by hairlines (the
-   board's background shows through 1px gaps); rows are split by thin lines;
-   hover and selection are a soft tint. Pixel art stays on the map and portraits. */
+   One white surface. Panels run edge to edge, split by hairlines (the board's
+   background shows through 1px gaps); hover and selection are a soft tint.
+   Pixel art stays on the map and the portraits. */
 body { background: var(--panel); }
-.top { margin: 0; border-radius: 0; border-bottom: 1px solid var(--divider, var(--line)); }
-.board { gap: 1px; padding: 0; background: var(--divider, var(--line)); }
-/* Dark mode: black dividers. */
+.board { gap: 1px; padding: 0; background: var(--divider); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --divider: #000; } }
 :root[data-theme="dark"] { --divider: #000; }
 /* The map sits in from its panel's edges, with rounded corners. */
 .map-card { padding: var(--space-2); }
 .map-card .map-wrap { border-radius: 6px; }
-.col-left, .col-right { gap: 1px; }
-.board .card { border-radius: 0; }
-/* Rows: no boxes, a divider under each, a tint on hover. */
+.map-empty > div { background: var(--panel); color: var(--ink); border-radius: 10px; padding: var(--space-4) var(--space-4) var(--space-3); box-shadow: 0 8px 24px rgb(0 0 0 / .18); max-width: 380px; }
+.map-empty p { color: var(--muted); font-size: var(--fs-sub); line-height: 1.45; }
+.map-empty .replay-box label { color: var(--faint); font-size: var(--fs-meta); }
+.map-empty .replay-box input { width: 88px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: 0 var(--space-2); font-variant-numeric: tabular-nums; }
+.map-empty :is(#btn-replay, #btn-new-2) { height: 32px; padding: 0 var(--space-3); border-radius: 8px; }
+/* Rows: no box; a tint on hover. */
 :is(#inspector > .roster .agent, .plan-row, #a-mind .convo-row, .m-card, #p-convos .convo-row,
-    #p-events .w-item, .c-row, details.log-step, .s-card, .u-card) {
+    #p-events .w-item, .c-row, details.log-step, .s-card) {
   background: none; border-radius: var(--radius-inner);
 }
-:is(#p-convos .convo-row, #p-events .w-item, .c-row, details.log-step, .plan-row, #a-mind .convo-row, .m-card) {
-  box-shadow: inset 0 -1px 0 var(--line); border-radius: 0;
-}
 :is(#inspector > .roster .agent, #p-convos .convo-row, #p-events .w-item, #a-mind button.convo-row):hover { background: var(--hover); }
-.charts-body > section:not([hidden]), .social-panel, .trail-side, .trail-panel { background: none; }
-.reader, .reader-head { background: none; }
+.charts-body > section:not([hidden]), .social-panel, .trail-side, .trail-panel, .reader, .reader-head { background: none; }
 /* Buttons: flat, a hairline border; the primary one is solid ink. */
-.btn { border: 1px solid var(--line); border-radius: 6px; box-shadow: none; }
 .btn:hover:not(:disabled) { border-color: var(--faint); }
 .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--panel); }
 .btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink), var(--panel) 15%); border-color: transparent; }
-.reader-head .back { border-color: var(--line); background: var(--panel); }
-/* Tabs: plain text; the selected one is underlined. */
-.tab { border-radius: 0; background: none; }
-.tab:hover { background: none; color: var(--muted); }
-.tab[aria-selected="true"], .tab[aria-selected="true"]:hover { background: none; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
 .tabs { padding-inline: var(--space-3); }
-.faces img + img { margin-left: -4px; }
-.map-wrap:has(#map-empty[hidden])::after { box-shadow: none; }
-.map-empty { background: rgb(20 22 26 / .35); }
+
+/* Bottom-right panel: the tab row sits on the panel, each tab's content in one gray card.
+   Inside the card --panel becomes the card's gray so sticky bars and fades blend in;
+   hovered rows and controls use --lift, the real panel color. */
+#activity, #inspector { --lift: var(--panel); }
+#activity > .pane { --panel: var(--paper); }
+#activity > .pane:not([hidden]) { margin: 0 var(--space-3); border-radius: 8px; background: var(--paper); padding-top: var(--space-2); }
+#activity > .pane:is(#p-convos, #p-events, #p-log, #p-console) { padding-top: 0; }
+#activity > .pane :is(.convo-row, .w-item, .c-row, details.log-step):hover,
+#activity > .pane .btn { background: var(--lift); }
+/* Sticky top bars are solid, with a short fade under them; lists fade at the bottom while more is below. */
+#activity > .pane :is(.convo-bar, .log-bar) { position: sticky; padding-top: var(--space-2); height: calc(var(--row2-h) + 2px); background: var(--panel); }
+#activity > .pane :is(.convo-bar, .log-bar)::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 100%; height: var(--space-4);
+  background: linear-gradient(var(--panel), transparent); pointer-events: none;
+}
+#activity :is(#p-convos, #w-list, #p-log) > .convo-fade { display: block; height: var(--space-6); margin-top: calc(-1 * var(--space-6)); }
+#activity .pane.at-end > .convo-fade, #activity #p-events.at-end #w-list > .convo-fade { display: none; }
+/* Console: the input sits at the bottom of the same card as the list. */
+#console-foot { --panel: var(--paper); }
+#console-foot:not([hidden]) { bottom: var(--list-bottom); margin: 0 var(--space-3); background: var(--paper); border-radius: 0 0 8px 8px; }
+#console-foot::before { border-radius: 0 0 8px 8px; }
+#console-foot .console-bar input { background: var(--lift); }
+/* Filter chips, filter buttons and Back share one look: 26px, hairline border, white, the card's corners. */
+#activity .pane :is(.pill, .convo-tools .btn.icon, .log-tools .btn.icon, .w-bar .btn.icon, .reader-bar .back) {
+  height: 26px; border: 1px solid var(--line); border-radius: 8px; background: var(--lift);
+}
+#activity .pane :is(.convo-tools .btn.icon, .log-tools .btn.icon, .w-bar .btn.icon) { width: 26px; }
+#activity .pane .pill button { border-radius: 6px; }
+/* Search in the tab row: closed it behaves like a tab; open it's a white field in the same spot,
+   and its text stays "Search" in the same place and style. No clear (x) button. */
+#activity .tabs-search > .search-line:not(.open):hover,
+#activity .tabs-search > .search-line:not(.open):focus-visible { background: none; color: var(--muted); }
+#activity .tabs-search > .search-line.open {
+  height: 31px; margin-left: calc(-1 * var(--space-3)); padding-left: calc(var(--space-3) - 1px);
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: none;
+  transition: border-color 120ms ease-out;
+}
+#activity .tabs-search > .search-line.open:focus-within { border-color: var(--faint); }
+#activity .tabs-search .log-search { font-size: var(--fs-head); font-weight: var(--w-medium); color: var(--ink); padding-left: 0; }
+#activity .tabs-search .log-search::placeholder { color: var(--faint); opacity: 1; }
+#activity .tabs-search .log-search::-webkit-search-cancel-button { display: none; }
+
+/* An open conversation or whisper keeps the list's date bar in place (Back where the filter sits);
+   the people line sits where the first row was, and the content starts where the next row would. */
+#activity .reader > .reader-bar { margin-inline: calc(-1 * var(--inner-x)); margin-bottom: 0; }
+#activity .reader > .reader-bar::after { display: none; }
+#activity .reader > .reader-bar .back { padding: 0 var(--space-3); font-size: var(--fs-meta); }
+#activity .reader > .reader-head { height: auto; align-items: flex-start; padding-block: 12px 14px; }
+#activity .reader > .reader-head > .faces { margin-top: 2px; }
+#activity .reader > .reader-head .reader-title { gap: 2px; line-height: 1.5; }
+#activity .reader > .reader-head .reader-title > span { white-space: normal; color: var(--muted); font-size: var(--fs-sub); line-height: 1.5; }
+#activity .reader > .reader-head .reader-where { margin-left: auto; flex: none; display: grid; justify-items: end; line-height: 1.5; padding-top: 3px; color: var(--faint); font-size: var(--fs-meta); }
+#activity .reader > .reader-head .w-actions + .reader-where { margin-left: var(--space-2); }
+#activity .reader > .reader-head .reader-flag { line-height: 1.35; }
+#activity .reader .reader-scroll { padding-top: var(--space-4); }
+#activity .reader .reader-scroll > :first-child { margin-top: 0; }
+
+/* Agent tabs: profile answers and today's goals in soft cards; the interview in one card like the console. */
+#inspector #a-profile .prof-sec { background: var(--paper); border-radius: 8px; padding: var(--space-3); margin-bottom: var(--space-2); }
+#inspector #a-plan .m-card:has(> .goals) { background: var(--paper); border-radius: 8px; padding: var(--space-3); }
+#inspector > #a-ask:not([hidden]) { --panel: var(--paper); background: var(--paper); border-radius: 8px; margin: 0 var(--space-3); padding-inline: var(--space-3); }
+#a-ask #ask-form.ask-bar { margin-inline: calc(-1 * var(--space-3)); }
+#a-ask #ask-form.ask-bar::before { border-radius: 0 0 8px 8px; }
+#a-ask .ask-bar input { background: var(--lift); }
+
+/* Whisper trail: the message sits in a soft card with its time and an open button in the footer;
+   the counts share one row. The header's own time is not shown. */
+#trail-card .trail-head .when { display: none; }
+.trail-foot { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-2); white-space: normal; }
+.trail-foot .trail-when { color: var(--faint); font-size: var(--fs-meta); white-space: nowrap; }
+.trail-open { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.trail-open:hover { color: var(--ink); background: var(--panel); }
+.trail-open svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (min-width: 1101px) {
+  #charts .trail-side .trail-text { flex: none; background: var(--paper); border-radius: 8px; padding: var(--space-3); margin: 0 0 auto; }
+  #charts .trail-side .trail-head { flex-wrap: wrap; height: auto; gap: var(--space-1) var(--space-2); }
+  #charts .trail-side .trail-pick { flex: 1 1 100%; }
+  #charts .trail-side .trail-pick .dd-trigger {
+    width: 100%; height: 30px; padding: 0 var(--space-2) 0 var(--space-3); justify-content: space-between;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+    font-size: var(--fs-body); font-weight: var(--w-medium); color: var(--ink);
+  }
+  #charts .trail-side .trail-summary { flex-direction: row; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-2); }
+  #charts .trail-side .trail-summary .ts { justify-content: flex-start; }
+  /* Each chart's last line of ink sits 16px above the panel's bottom, like the activity card;
+     these cancel the blank space each chart draws under its key. */
+  #charts .charts-body > #stance-card { margin-bottom: -15px; }
+  #charts .charts-body > #trail-card { margin-bottom: -8px; }
+  #charts .charts-body > #social-card { margin-bottom: -14px; }
+}
 </style>
 </head>
 <body>
@@ -1185,11 +1232,11 @@ body { background: var(--panel); }
         <div class="map-empty" id="map-empty">
           <div>
             <p id="map-empty-text">The town is quiet. Start a simulation to see it move.</p>
-            <button class="btn" id="btn-new-2" type="button">Start simulation</button>
+            <button class="btn primary" id="btn-new-2" type="button">Start simulation</button>
             <div class="replay-box" id="replay-box" hidden>
               <label for="replay-step">From step</label>
               <input id="replay-step" type="number" min="0" inputmode="numeric">
-              <button class="btn" id="btn-replay" type="button">Replay on the map</button>
+              <button class="btn primary" id="btn-replay" type="button">Replay on the map</button>
             </div>
           </div>
         </div>
@@ -1249,7 +1296,6 @@ body { background: var(--panel); }
           <div class="trail-head">
             <h2 id="trail-heading">Where each whisper went</h2>
             <div class="trail-pick" id="trail-select" hidden></div>
-            <span class="when" id="trail-when"></span>
           </div>
           <p class="trail-text" id="trail-text"></p>
           <div class="trail-summary" id="trail-summary"></div>
@@ -1260,8 +1306,7 @@ body { background: var(--panel); }
         <div class="social-head">
           <h2 id="social-heading">Who talks with whom</h2>
         </div>
-        <div class="social-panel social-grid-card"><div class="panel-hint">Click a square to read their conversations</div><div id="social-grid"></div></div>
-        <div class="social-panel social-net-card"><div class="panel-hint">Click a line to read their conversations</div><div id="social-network"></div><div class="social-legend" id="social-legend"></div></div>
+        <div class="social-panel"><div class="panel-hint">Click a line to read their conversations</div><div id="social-network"></div><div class="social-legend" id="social-legend"></div></div>
       </section>
       </div>
     </section>
@@ -1269,10 +1314,10 @@ body { background: var(--panel); }
     <section class="card" aria-label="Activity" id="activity">
       <div class="tabs" role="tablist">
         <span class="tabs-search" id="activity-search">
-          <div class="search-line" data-for="p-convos" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="convo-q" type="search" placeholder="Search conversations" aria-label="Search conversations"></div>
-          <div class="search-line" data-for="p-console" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="c-q" type="search" placeholder="Search results" aria-label="Search console results"></div>
-          <div class="search-line" data-for="p-events" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="w-q" type="search" placeholder="Search whispers" aria-label="Search whispers"></div>
-          <div class="search-line" data-for="p-log" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="log-q" type="search" placeholder="Search the log" aria-label="Search the log"></div>
+          <div class="search-line" data-for="p-convos" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="convo-q" type="search" placeholder="Search" aria-label="Search conversations"></div>
+          <div class="search-line" data-for="p-console" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="c-q" type="search" placeholder="Search" aria-label="Search console results"></div>
+          <div class="search-line" data-for="p-events" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="w-q" type="search" placeholder="Search" aria-label="Search whispers"></div>
+          <div class="search-line" data-for="p-log" tabindex="0"><svg class="tool-icon s-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span class="s-label">Search</span><input class="log-search" id="log-q" type="search" placeholder="Search" aria-label="Search the log"></div>
           <div class="u-kpis" id="usage-kpis"></div>
         </span>
         <button class="tab" role="tab" aria-selected="true" data-pane="p-convos">Conversations<span class="count" id="n-convos"></span></button>
@@ -1835,13 +1880,6 @@ const convoFilterBtn = $("convo-filter");
 let convoQuery = "";
 
 
-function convoWhen(c, withDay) {
-  const d = parseGameTime(c.time);
-  if (!d) return c.time || "";
-  const time = d.toTimeString().slice(0, 5);
-  return withDay ? `${d.toLocaleDateString(undefined, {weekday: "short", month: "short", day: "numeric"})}, ${time}` : time;
-}
-
 function renderConvos() {
   const all = (data?.conversations || []).slice().reverse();
   const own = all.filter((c) => !c.inherited);
@@ -1903,12 +1941,19 @@ function convoReader(c) {
     if (last && last.who === who) last.lines.push(text);
     else groups.push({who, lines: [text]});
   }
-  return `<div class="reader-head">
+  const t = parseGameTime(c.time);
+  const day = t ? t.toLocaleDateString(undefined, {weekday: "short", month: "short", day: "numeric"}) : "";
+  // Runs log when a conversation starts; newer runs also log how long it took.
+  const end = t && c.duration_min ? new Date(+t + c.duration_min * 60000) : null;
+  const hhmm = (d) => d.toTimeString().slice(0, 5);
+  const endLine = end ? `Conversation ended · ${hhmm(end)}` : t ? `End of conversation · started ${hhmm(t)}` : "End of conversation";
+  return `<div class="convo-bar reader-bar"><span class="convo-date">${esc(day)}</span><button class="btn back" type="button" data-close-convo>Back</button></div>
+    <div class="reader-head">
       <span class="faces">${speakers.slice(0, 2).map((n) => `<img src="${sprite(n)}" alt="" style="--who:${agentColor(n)}">`).join("")}</span>
-      <div class="reader-title"><b>${esc(speakers.map(firstName).join(" & "))}</b><span>${esc(place(c.location))} · ${esc(convoWhen(c, true))}${c.inherited ? " · earlier run" : ""}</span></div>
-      <button class="btn back" type="button" data-close-convo>Back</button>
+      <div class="reader-title"><b>${esc(speakers.map(firstName).join(" & "))}</b><span>${esc(c.summary || "")}${c.inherited ? " · earlier run" : ""}</span></div>
+      <span class="reader-where">${esc(place(c.location))}${whispered ? `<span class="reader-flag">◆ whisper</span>` : ""}</span>
     </div>
-    <div class="reader-scroll">${c.summary || whispered ? `<div class="reader-sum" id="reader-sum"><span>${esc(c.summary || "")}</span>${whispered ? `<span class="reader-flag">◆ a whisper came up</span>` : ""}</div>` : ""}
+    <div class="reader-scroll">
     <div class="chat">${groups.map((g) => `
       <div class="msg ${g.who === speakers[0] ? "left" : "right"}" style="--who:${agentColor(g.who)}">
         <img src="${sprite(g.who)}" alt="">
@@ -1916,7 +1961,8 @@ function convoReader(c) {
           const m = whisperIn(t);
           return m ? `<div class="msg-text whispered" title="${esc(whisperText(m))}">${esc(t)}</div><div class="msg-flag">◆ whisper</div>` : `<div class="msg-text">${esc(t)}</div>`;
         }).join("")}</div>
-      </div>`).join("")}</div></div>`;
+      </div>`).join("")}</div>
+    <div class="chat-end">${esc(endLine)}</div></div>`;
 }
 
 
@@ -2122,13 +2168,15 @@ function whisperReader(w) {
     return `<button class="w-mention" type="button" data-open-convo-key="${esc(convoKey(m.row))}" style="--who:${agentColor(m.speaker)}">
       <img src="${sprite(m.speaker)}" alt=""><span class="convo-main"><span class="convo-top"><span class="pair">${esc(String(m.speaker).split(" ")[0])} to ${esc(others || "someone")}</span>${t ? `<span class="when">${esc(gameLabel(t))}</span>` : ""}</span><q class="convo-sum">${esc(m.quote)}</q></span></button>`;
   }).join("");
+  const upcoming = ["scheduled", "sending", "waiting", "failed"].includes(f.status);
+  const day = upcoming ? "Upcoming" : f.time ? f.time.toLocaleDateString(undefined, {weekday: "short", month: "short", day: "numeric"}) : "Earlier";
   return `<div class="reader">
+    <div class="convo-bar reader-bar"><span class="convo-date">${esc(day)}</span><button class="btn back" type="button" data-close-whisper>Back</button></div>
     <div class="reader-head">${faces}
-      <div class="reader-title"><b>${esc(whisperTo(w.targets))}</b><span>${whisperStatus(f)} · ${esc(f.when)}${w.inherited ? " · earlier run" : ""}</span></div>
+      <div class="reader-title"><b>${esc(whisperTo(w.targets))}</b><span>${esc(w.text)}${w.inherited ? " · earlier run" : ""}</span></div>
       <span class="w-actions">${whisperActions(w)}</span>
-      <button class="btn back" type="button" data-close-whisper>Back</button>
+      <span class="reader-where"><span>${whisperStatus(f)} · ${esc(upcoming || !(f.time instanceof Date) ? f.when : f.time.toTimeString().slice(0, 5))}</span></span>
     </div>
-    <p class="w-full">${esc(w.text)}</p>
     <div class="reader-scroll">${f.missed.length ? `<div class="w-error">Didn't reach ${esc(whisperAudience(f.missed))}: ${esc(w.failed[f.missed[0]])}</div>` : ""}
     <div class="w-sub">Came up in conversation</div>
     ${mentions || `<div class="w-list-note">${f.reached ? "Not yet. It shows here once someone brings it up." : "Once it reaches someone, the conversations where it comes up are listed here."}</div>`}
@@ -2539,9 +2587,8 @@ function trailStats(w, story) {
   const failed = Object.keys(w.failed || {}).length;
   const chip = (label, n, cls = "") => `<span class="ts${cls}">${label} <b>${n}</b></span>`;
   return chip("Reached", story.told.length)
-    + (story.passedOn.length ? chip("Heard secondhand", story.passedOn.length) : "")
-    + (failed ? chip("Missed", failed, " bad") : "")
-    + `<button class="w-link" type="button" data-trail-open="${esc(w.id)}">Open in Whispers</button>`;
+    + (story.passedOn.length ? chip("Secondhand", story.passedOn.length) : "")
+    + (failed ? chip("Missed", failed, " bad") : "");
 }
 
 function trailTree(w, story) {
@@ -2694,8 +2741,7 @@ function renderTrail() {
   paint($("trail-select"), trailPickHtml(sent, w));
   const story = whisperStory(w, data?.mentions, data?.conversations);
   const went = trailWhen(w);
-  paint($("trail-when"), esc(went));
-  paint($("trail-text"), esc(w.text || ""));
+  paint($("trail-text"), `${esc(w.text || "")}<span class="trail-foot"><span class="trail-when">${esc(went)}</span><button class="trail-open" type="button" data-trail-open="${esc(w.id)}" aria-label="Open in Whispers" title="Open in Whispers"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></button></span>`);
   paint($("trail-summary"), trailStats(w, story));
   $("trail-summary").title = whisperSummary(story);
   paint(box, trailTreeSvg(w, story, W, H));
@@ -3336,7 +3382,7 @@ function socialPositions(nodes, width, height) {
   const names = nodes.map((n) => n.name).sort((x, y) => rank(x) - rank(y) || (x < y ? -1 : x > y ? 1 : 0));
   const h = height || 300, s = netSprite(width, h);
   const ry = Math.max(24, h / 2 - s / 2 - 20);
-  const rx = Math.max(24, Math.min(width / 2 - s / 2 - 64, ry * 1.8));
+  const rx = Math.max(24, width / 2 - s / 2 - 64);   // stretch across the full width
   return names.map((name, i) => {
     const a = -Math.PI / 2 + (2 * Math.PI * i) / names.length;
     return {name, a, x: +(width / 2 + rx * Math.cos(a)).toFixed(1), y: +(h / 2 + ry * Math.sin(a)).toFixed(1)};
@@ -3404,7 +3450,6 @@ function renderNetwork() {
       `<rect class="ghost" x="${p.x - s / 2 - 2}" y="${p.y - s / 2 - 2}" width="${s + 4}" height="${s + 4}" rx="4" stroke-dasharray="4 4"/>`).join("")}</svg>`
       + emptyMsg("Start a run to see who talks with whom. Each agent sits on the ring; lines show how often two of them talk."));
     paint($("social-legend"), "");
-    paint($("social-grid"), "");
     return;
   }
   const {edges} = netState();
@@ -3465,35 +3510,10 @@ function renderNetwork() {
       <text class="social-label" x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}">${esc(first)}</text></g>`;
   }).join("");
   paint(box, `<svg class="social-net${focus.whisper ? " whisper" : ""}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Who talks with whom: completed conversations and latest stance">${svg}</svg>`);
-  renderSocialGrid(pos.map((p) => p.name), edges);
-}
-
-function renderSocialGrid(names, edges) {
-  const box = $("social-grid");
-  const labW = Math.ceil(Math.max(0, ...names.map((n) => n.split(" ")[0].length)) * 6.5) + 16 + 10;
-  const pad = 8, capH = 16;
-  const side = Math.max(120, Math.min((box.clientWidth || 300) - labW, (box.clientHeight || 300) - capH - 2 * pad));
-  const count = new Map(edges.map((e) => [[e.source, e.target].sort().join("|"), e]));
-  const most = Math.max(1, ...edges.map((e) => e.count));
-  const head = (n) => `<img src="${esc(sprite(n))}" alt="" title="${esc(n)}" style="--who:${agentColor(n)}">`;
-  let html = `<span></span>${names.map(head).join("")}`;
-  for (const r of names) {
-    html += `<span class="row-head" title="${esc(r)}"><span>${esc(r.split(" ")[0])}</span>${head(r)}</span>`;
-    for (const c of names) {
-      if (r === c) { html += `<span class="cell self"></span>`; continue; }
-      const e = count.get([r, c].sort().join("|"));
-      const sel = selected && (r === selected || c === selected) ? " sel" : "";
-      html += e
-        ? `<span class="cell has${sel}" data-pair="${esc(e.source)}|${esc(e.target)}" style="background:color-mix(in srgb, var(--moss) ${Math.round(25 + 75 * e.count / most)}%, var(--panel))" data-tip-html="${esc(pairTip(r, c, e))}">${e.count}</span>`
-        : `<span class="cell"></span>`;
-    }
-  }
-  html += `<span></span><span class="cap">Talked with →</span>`;
-  paint(box, `<div class="social-grid${selected ? " has-sel" : ""}" style="--n:${names.length};--lab:${labW}px;width:${side + labW}px;height:${side + capH}px">${html}</div>`);
 }
 
 function socialHover(pair, agent) {
-  const svg = $("social-network").querySelector?.(".social-net"), grid = $("social-grid").querySelector?.(".social-grid");
+  const svg = $("social-network").querySelector?.(".social-net");
   const [a, b] = pair ? pair.split("|") : [];
   const match = (x, y) => (x === a && y === b) || (x === b && y === a);
   if (svg && pair) {
@@ -3501,13 +3521,6 @@ function socialHover(pair, agent) {
     svg.querySelectorAll(".social-edge").forEach((l) => l.classList.toggle("on", match(l.dataset.a, l.dataset.b)));
     svg.querySelectorAll("[data-network-node]").forEach((g) => g.classList.toggle("on", g.dataset.networkNode === a || g.dataset.networkNode === b));
   } else if (svg && !agent) svg.classList.remove("hl");
-  if (grid) {
-    grid.classList.toggle("hl", !!(pair || agent));
-    grid.querySelectorAll(".cell[data-pair]").forEach((c) => {
-      const [x, y] = c.dataset.pair.split("|");
-      c.classList.toggle("on", pair ? match(x, y) : !!agent && (x === agent || y === agent));
-    });
-  }
 }
 
 function openPair(pair) {
@@ -3544,18 +3557,11 @@ $("social-network").addEventListener("mouseover", (e) => {
   svg.querySelectorAll("[data-network-node]").forEach((g) => g.classList.toggle("on", near.has(g.dataset.networkNode)));
 });
 $("social-network").addEventListener("mouseleave", () => { socialHover(null); $("social-network").querySelector?.(".social-net")?.classList.remove("hl"); });
-$("social-grid").addEventListener("mouseover", (e) => socialHover(e.target.closest?.("[data-pair]")?.dataset.pair || null));
-$("social-grid").addEventListener("mouseleave", () => socialHover(null));
-$("social-grid").addEventListener("click", (e) => {
-  const pair = e.target.closest("[data-pair]");
-  if (pair) openPair(pair.dataset.pair);
-});
 $("social-card").addEventListener("mousemove", (e) => chartTipMove(e));
 $("social-card").addEventListener("mouseleave", () => { $("chart-tip").hidden = true; });
 onFocus(() => renderNetwork());
 const graphResize = new ResizeObserver(() => { renderStance(); renderNetwork(); });
 graphResize.observe($("social-network"));
-graphResize.observe($("social-grid"));
 graphResize.observe($("stance"));
 
 /* ---------------- log ---------------- */
@@ -3792,10 +3798,7 @@ function aimMap() {
 }
 
 $("who").addEventListener("click", (e) => {
-  if (e.target.closest("[data-show-map]")) {
-    if (selected) $("map").contentWindow?.postMessage({type: "focus", name: selected}, location.origin);
-    return;
-  }
+  if (e.target.closest("[data-show-map]")) { aimMap(); return; }
 });
 $("agent-back").addEventListener("click", () => {
   showRoster(true);
@@ -4632,12 +4635,12 @@ function chartTipMove(e) {
   tip.hidden = false;
   const w = tip.offsetWidth, h = tip.offsetHeight;
   let x = e.clientX + 12, y = e.clientY - h - 10 < 8 ? e.clientY + 14 : e.clientY - h - 10;
-  const net = el.closest?.(".social-net"), grid = el.closest?.(".social-grid");
+  const net = el.closest?.(".social-net");
   if (net) {
     const r = net.getBoundingClientRect();
     if (e.clientX < r.left + r.width / 2) x = e.clientX - w - 12;
     y = e.clientY < r.top + r.height / 2 ? e.clientY - h - 10 : e.clientY + 14;
-  } else if (grid) x = e.clientX - w - 12;
+  }
   tip.style.left = `${Math.max(8, Math.min(x, innerWidth - w - 8))}px`;
   tip.style.top = `${Math.max(8, Math.min(y, innerHeight - h - 8))}px`;
 }

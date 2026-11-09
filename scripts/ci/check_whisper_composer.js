@@ -240,9 +240,9 @@ assert.match(chart, /&amp;lt;i&amp;gt;vote/);
 // Stat chips, with the full summary as the tooltip.
 const stats = element("trail-summary").innerHTML;
 assert.match(stats, /Reached <b>2<\/b>/);
-assert.match(stats, /Heard secondhand <b>1<\/b>/);
+assert.match(stats, /Secondhand <b>1<\/b>/);
 assert.match(stats, /Missed <b>1<\/b>/);
-assert.match(stats, /data-trail-open="w"/);
+assert.match(element("trail-text").innerHTML, /data-trail-open="w"/);
 assert.match(element("trail-summary").title, /Told to 2 people\. 1 more heard it/);
 // The picker omits scheduled whispers nobody has heard yet.
 assert.doesNotMatch(element("trail-select").innerHTML, /scheduled-only/);
@@ -257,7 +257,7 @@ run("setFocus({whisper: 'second'}); renderTrail()");
 assert.match(element("trail-summary").innerHTML, /Reached <b>1<\/b>/);
 // No focus: the newest sent whisper.
 run("setFocus({whisper: null}); renderTrail()");
-assert.match(element("trail-summary").innerHTML, /data-trail-open="second"/);
+assert.match(element("trail-text").innerHTML, /data-trail-open="second"/);
 
 // Empty states say what to do.
 state("idle");
