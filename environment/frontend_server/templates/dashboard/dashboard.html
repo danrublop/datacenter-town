@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap">
 <style>
 @font-face {
   font-family: "Bespoke Sans";
@@ -53,7 +54,7 @@
   --bar-h: 47px;
   --row2-h: 32px;
   --divider: var(--muted);
-  --sans: "Bespoke Sans", system-ui, sans-serif;
+  --sans: "Satoshi", "Bespoke Sans", system-ui, sans-serif;
   --w-regular: 400;
   --w-medium: 500;
   --w-bold: 600;
@@ -252,8 +253,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .col-left, .col-right { display: flex; flex-direction: column; gap: var(--card-gap); min-height: 0; }
 .board .card { border-radius: var(--radius-card); overflow: hidden; }
-/* Map and activity share one height so both columns split on the same line. */
-.col-left, #activity { --top: min((100cqw - 3 * var(--card-gap)) / 2 * 800 / 1500, (100cqh - 3 * var(--card-gap)) / 2); }
+/* Map and charts share one height so both columns split on the same line. */
+.col-left, #charts { --top: min((100cqw - 3 * var(--card-gap)) / 2 * 800 / 1500, (100cqh - 3 * var(--card-gap)) / 2); }
 .col-left { flex: none; width: calc(var(--top) * 1500 / 800); }
 .col-right { flex: 1 1 0; min-width: 0; }
 .map-card {
@@ -262,8 +263,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .map-card .map-wrap { width: min(100cqw, 100cqh * 1500 / 800); margin: auto; }
 #inspector { flex: 1; min-height: 0; height: auto; contain: size; }
-#activity { flex: none; height: var(--top); }
-#charts { flex: 1 1 0; }
+#charts { flex: none; height: var(--top); }
+#activity { flex: 1 1 0; }
 #activity, #charts { min-height: 0; contain: size; }
 .charts-body { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .charts-body > section:not([hidden]) { flex: 1 0 auto; display: flex; flex-direction: column; min-height: 0; }
@@ -1184,6 +1185,44 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
     </section>
   </div>
   <div class="col-right">
+    <section class="card" aria-label="Charts" id="charts">
+      <div class="tabs" role="tablist">
+        <span class="tabs-title" id="charts-title" aria-hidden="true">Where each agent stands on the datacenter</span>
+        
+        <button class="tab" role="tab" aria-selected="true" data-pane="stance-card">Stance</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="trail-card">Whisper trail</button>
+        <button class="tab" role="tab" aria-selected="false" data-pane="social-card">Social network</button>
+      </div>
+      <div class="charts-body">
+      <section class="stance" id="stance-card" aria-label="Where each agent stands on the datacenter">
+        <div class="stance-head">
+          <h2>Where each agent stands on the datacenter</h2>
+          <span class="sr-only" id="stance-note"></span>
+        </div>
+        <div id="stance"></div>
+      </section>
+      <section class="trail" id="trail-card" hidden aria-labelledby="trail-heading">
+        <div class="trail-side" id="trail-side">
+          <div class="trail-head">
+            <h2 id="trail-heading">Where each whisper went</h2>
+            <div class="trail-pick" id="trail-select" hidden></div>
+            <span class="when" id="trail-when"></span>
+          </div>
+          <p class="trail-text" id="trail-text"></p>
+          <div class="trail-summary" id="trail-summary"></div>
+        </div>
+        <div class="trail-panel"><div id="trail-chart"></div></div>
+      </section>
+      <section class="social" id="social-card" hidden aria-labelledby="social-heading">
+        <div class="social-head">
+          <h2 id="social-heading">Who talks with whom</h2>
+        </div>
+        <div class="social-panel social-grid-card"><div class="panel-hint">Click a square to read their conversations</div><div id="social-grid"></div></div>
+        <div class="social-panel social-net-card"><div class="panel-hint">Click a line to read their conversations</div><div id="social-network"></div><div class="social-legend" id="social-legend"></div></div>
+      </section>
+      </div>
+    </section>
+
     <section class="card" aria-label="Activity" id="activity">
       <div class="tabs" role="tablist">
         <span class="tabs-search" id="activity-search">
@@ -1246,44 +1285,6 @@ dialog .w-at input { flex: 1 1 0; min-width: 0; width: auto; padding: var(--spac
             <button class="c-send" id="console-send" type="submit" aria-label="Send (Enter)" title="Send (Enter)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 10 4 15l5 5"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg></button>
           </div>
         </form>
-      </div>
-    </section>
-
-    <section class="card" aria-label="Charts" id="charts">
-      <div class="tabs" role="tablist">
-        <span class="tabs-title" id="charts-title" aria-hidden="true">Where each agent stands on the datacenter</span>
-        
-        <button class="tab" role="tab" aria-selected="true" data-pane="stance-card">Stance</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="trail-card">Whisper trail</button>
-        <button class="tab" role="tab" aria-selected="false" data-pane="social-card">Social network</button>
-      </div>
-      <div class="charts-body">
-      <section class="stance" id="stance-card" aria-label="Where each agent stands on the datacenter">
-        <div class="stance-head">
-          <h2>Where each agent stands on the datacenter</h2>
-          <span class="sr-only" id="stance-note"></span>
-        </div>
-        <div id="stance"></div>
-      </section>
-      <section class="trail" id="trail-card" hidden aria-labelledby="trail-heading">
-        <div class="trail-side" id="trail-side">
-          <div class="trail-head">
-            <h2 id="trail-heading">Where each whisper went</h2>
-            <div class="trail-pick" id="trail-select" hidden></div>
-            <span class="when" id="trail-when"></span>
-          </div>
-          <p class="trail-text" id="trail-text"></p>
-          <div class="trail-summary" id="trail-summary"></div>
-        </div>
-        <div class="trail-panel"><div id="trail-chart"></div></div>
-      </section>
-      <section class="social" id="social-card" hidden aria-labelledby="social-heading">
-        <div class="social-head">
-          <h2 id="social-heading">Who talks with whom</h2>
-        </div>
-        <div class="social-panel social-grid-card"><div class="panel-hint">Click a square to read their conversations</div><div id="social-grid"></div></div>
-        <div class="social-panel social-net-card"><div class="panel-hint">Click a line to read their conversations</div><div id="social-network"></div><div class="social-legend" id="social-legend"></div></div>
-      </section>
       </div>
     </section>
   </div>
@@ -2734,7 +2735,7 @@ const stanceTick = (v) => {
   return word ? `<tspan class="axis-word">${word}</tspan> ${v}` : String(v);
 };
 function stanceAxisLeft() {
-  return (typeof labelWidth === "function" ? labelWidth(["support 100", "mixed 50", "opposed 0"]) : 60) + 8;
+  return (typeof labelWidth === "function" ? labelWidth(["support 100", "mixed 50", "opposed 0"]) : 60) + 12;
 }
 let SVG_H = 300, PLOT_B = 272;
 // Pre-100-scale readings have no scale field; plot them by position on their own scale.
@@ -3744,6 +3745,11 @@ function showRoster(open) {
   $("inspector").classList.toggle("listing", open);
 }
 
+// Center the map on the picked agent, or show the whole town when none is picked.
+function aimMap() {
+  $("map").contentWindow?.postMessage(selected ? {type: "focus", name: selected} : {type: "overview"}, location.origin);
+}
+
 $("who").addEventListener("click", (e) => {
   if (e.target.closest("[data-show-map]")) {
     if (selected) $("map").contentWindow?.postMessage({type: "focus", name: selected}, location.origin);
@@ -3753,6 +3759,7 @@ $("who").addEventListener("click", (e) => {
 $("agent-back").addEventListener("click", () => {
   showRoster(true);
   selected = null;
+  aimMap();
   if (pickFilter) { convoFilter = convoFilter.filter((n) => n !== pickFilter); pickFilter = null; renderConvos(); }
   drawn.roster = null;
   renderStance(); renderNetwork(); renderTrail();
@@ -3776,7 +3783,7 @@ function selectAgent(name) {
   if (!convoFilter.includes(name)) { convoFilter = [...convoFilter, name].slice(-2); pickFilter = name; }
   else if (pickFilter !== name) pickFilter = null;
   renderConvos();
-  $("map").contentWindow?.postMessage({type: "focus", name: selected}, location.origin);
+  aimMap();
   drawn.roster = null;
   nowViewOpen = nowHistOpen = nowChatOpen = movedAll = false;
   poll();
@@ -4124,9 +4131,7 @@ function renderHeader() {
     $("map").src = !shown ? "about:blank" : shown.startsWith("backdrop:") ? shown.slice(9)
       : shown.startsWith("replay:") ? shown.slice(7) : "/simulator_home?embed=1";
     // Phaser builds the scene shortly after load.
-    $("map").onload = () => setTimeout(() => {
-      if (selected) $("map").contentWindow?.postMessage({type: "focus", name: selected}, location.origin);
-    }, 1500);
+    $("map").onload = () => setTimeout(aimMap, 1500);
   }
   $("map-empty-text").textContent = view
     ? "Replay this run on the map. It plays back every step from the one you pick."
@@ -4203,7 +4208,7 @@ async function poll() {
       else { view = null; toast("That run couldn't be loaded."); }
     }
     const names = (data.sim?.roster || []).map((a) => a.name);
-    if (selected && !names.includes(selected)) { selected = null; showRoster(true); }
+    if (selected && !names.includes(selected)) { selected = null; showRoster(true); aimMap(); }
     watchRuns();
     renderHeader(); renderSettings(); renderRoster(); renderAgent(); renderInterview();
     renderTitle();

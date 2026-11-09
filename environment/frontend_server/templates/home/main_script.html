@@ -82,6 +82,7 @@
 	const game = new Phaser.Game(config);
 	let cursors;
 	let player;
+	let camera, mapW, mapH;
 	let showDebug = false;
 
 	// Persona related variables. This should have the name of the persona as its 
@@ -276,9 +277,11 @@
 	                setOffset(0, 0);
 	  player.setDepth(-1);
 	  // Setting up the camera. 
-	  const camera = this.cameras.main;
+	  camera = this.cameras.main;
+	  mapW = map.widthInPixels;
+	  mapH = map.heightInPixels;
 	  camera.startFollow(player);
-	  camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+	  camera.setBounds(0, 0, mapW, mapH);
 	  if (overview) {
 	    camera.stopFollow();
 	    camera.setZoom(Math.max(config.width / map.widthInPixels, config.height / map.heightInPixels));
@@ -565,11 +568,23 @@
 	var play_button=document.getElementById("play_button");
 	var pause_button=document.getElementById("pause_button");
 
-	// The dashboard asks the embedded map to center on an agent.
+	// The dashboard asks the embedded map to center on an agent, or to show
+	// the whole town when no agent is picked.
 	window.addEventListener("message", function(e) {
-	  if (e.origin !== window.location.origin || !e.data || e.data.type !== "focus") return;
-	  let target = personas[e.data.name];
-	  if (target && player) player.setPosition(target.body.x, target.body.y);
+	  if (overview || e.origin !== window.location.origin || !e.data || !camera) return;
+	  if (e.data.type === "overview") {
+	    // Fill the frame with the town. Sits a bit above center so the top row
+	    // of houses shows; only forest is trimmed at the bottom.
+	    camera.stopFollow();
+	    camera.setZoom(Math.max(config.width / mapW, config.height / mapH));
+	    camera.centerOn(mapW / 2, mapH / 2 - 150);
+	  } else if (e.data.type === "focus") {
+	    let target = personas[e.data.name];
+	    if (!target || !player) return;
+	    player.setPosition(target.body.x, target.body.y);
+	    camera.setZoom(1);
+	    camera.startFollow(player);
+	  }
 	});
 </script>
 
