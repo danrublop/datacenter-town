@@ -316,7 +316,8 @@
 	    personas[persona_name] = new_sprite;
 	    // The physics sprite still does the moving; a peg in the persona's color is drawn on it.
 	    new_sprite.setVisible(false);
-	    pegs[persona_name] = this.add.sprite(0, 0, "pegs", pegRow(i, "d") * 3).setOrigin(0.5, 1).setScale(3);
+	    pegs[persona_name] = this.add.sprite(0, 0, "pegs", pegRow(i, "d") * 3).setOrigin(0.5, 1).setScale(3)
+	      .setDepth(2.5);   // above the foreground layer (depth 2) so the taller peg's head is never cut off; below the bubbles (3)
 	    syncPeg(persona_name);
 	    pronunciatios[persona_name] = this.add.text(
 	                                   new_sprite.body.x - 6, 
